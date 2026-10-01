@@ -1,0 +1,16 @@
+# depslib dependency file v1.0
+1787485926 source:c:\users\kyeyune andrew\onedrive\desktop\datastructures_c\arrays\main.c
+	<stdio.h>
+	<stdlib.h>
+
+1787558516 source:c:\users\kyeyune andrew\onedrive\desktop\datastructures_c\arrays\linkedlist.c
+	<stdio.h>
+	<string.h>
+
+1787507509 source:c:\users\kyeyune andrew\onedrive\desktop\datastructures_c\arrays\adts.c
+	<stdio.h>
+	<stdbool.h>
+
+1787558558 source:c:\users\kyeyune andrew\onedrive\desktop\datastructures_c\arrays\queue.c
+	<stdio.h>
+
