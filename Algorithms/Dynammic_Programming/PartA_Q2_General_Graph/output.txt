@@ -1,0 +1,14 @@
+A) Relabelled slide-20 graph (source is now 7, target is now 6)
+  Naive Q1 loop:  INF  (WRONG - predecessors not ready)
+  Re-designed algorithm:
+  Method: DAG -> BCOST in topological order
+  Shortest 7 -> 6 = 16   Path: 7 -> 12 -> 2 -> 4 -> 6
+
+B) Original graph + edge 10->7 (cost 1)  [cycle 7->10->7]
+  Method: cycle found -> Bellman-Ford
+  Shortest 1 -> 12 = 16   Path: 1 -> 3 -> 6 -> 10 -> 12
+
+C) Original graph + edge 10->7 (cost -6) [cycle weight -3]
+  Method: cycle found -> Bellman-Ford
+  Result: NEGATIVE CYCLE reachable - shortest path undefined
+
