@@ -84,38 +84,14 @@ Two design points worth mentioning in the report:
 
 ```java
 try {
-    choice = Integer.parseInt(readLine());
+    choice = Integer.parseInt(scanner.nextLine().trim());
 } catch (NumberFormatException e) {
     System.out.println("Invalid input. Please enter a number.");
     continue;
 }
 ```
 
-The whole line is read first, then turned into a number with `Integer.parseInt`. If the line is not a number, `parseInt` throws a `NumberFormatException`; the `catch` prints a message and `continue` shows the menu again. So typing a letter doesn't crash or loop forever, unlike the C version. Choices 1–8 call the operations above, and 9 exits the `do … while (choice != 9)` loop. Junction names are read with `readLine()` too, so a name can contain spaces ("North Fork").
-
-### `readLine` — reading input without `Scanner`
-
-The program has **no imports**, so instead of `java.util.Scanner` it has its own small `readLine()` method:
-
-```java
-static String readLine() {
-    String line = "";
-    try {
-        int c = System.in.read();
-        while (c != -1 && c != '\n') {   // stop at the end of the line
-            if (c != '\r') {             // Windows adds \r before \n: skip it
-                line = line + (char) c;
-            }
-            c = System.in.read();
-        }
-    } catch (Exception e) {
-        // could not read input: return what we have so far
-    }
-    return line.trim();
-}
-```
-
-`System.in.read()` gives back the next typed character as a number, or −1 when there is no more input. The loop adds characters to `line` until it reaches the end of the line (`\n`).
+The whole line is read first with `scanner.nextLine()`, then turned into a number with `Integer.parseInt`. If the line is not a number, `parseInt` throws a `NumberFormatException`; the `catch` prints a message and `continue` shows the menu again. So typing a letter doesn't crash or loop forever, unlike the C version. Choices 1–8 call the operations above, and 9 exits the `do … while (choice != 9)` loop. Junction names are read with `scanner.nextLine()` too, so a name can contain spaces ("North Fork").
 
 The `{ }` braces around some `case` blocks give each case its own scope, so both case 1 and case 2 can declare a local variable called `junction`.
 
@@ -165,11 +141,11 @@ Exiting Search & Rescue Backtrack Assistant. Goodbye!
 
 ## What changed (simplified version)
 
+The program still uses `java.util.Scanner`. Only the way it reads the menu choice changed:
+
 | Before | Now | Why |
 |---|---|---|
-| `import java.util.Scanner;` | A small `readLine()` method built on `System.in.read()` | No imports are needed. `System` is part of `java.lang` |
-| `scanner.hasNextInt()` / `scanner.nextInt()` for the menu choice | `Integer.parseInt(readLine())` inside `try`/`catch` | Same protection against bad input, without `Scanner` |
-| `scanner.next()` read junction names as a single word | `readLine()` reads the whole line | Names with spaces now work |
-| `scanner.close()` at the end of `main` | Removed | There is no `Scanner` to close |
+| `scanner.hasNextInt()`, then `scanner.nextInt()` for the menu choice | `Integer.parseInt(scanner.nextLine().trim())` inside `try`/`catch` | Every input is read the same way, as a whole line |
+| `scanner.next()` read junction names as a single word | `scanner.nextLine()` reads the whole line | Names with spaces now work ("North Fork") |
 
 The stack itself (`push`, `pop`, `peek`, `display`, `depth`, `emergencyRecall`, `alreadyVisited`) did not change.

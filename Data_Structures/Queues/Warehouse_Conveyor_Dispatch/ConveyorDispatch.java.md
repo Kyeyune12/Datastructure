@@ -1,6 +1,6 @@
 # ConveyorDispatch.java
 
-**Project B (Queue), in Java.** The *Warehouse Conveyor Package Dispatch System*: a **circular queue in a fixed array of 5 slots**, written by hand (no imports, no `java.util.Queue`, no `ArrayList`, no shifting). Packages are dispatched first in, first out.
+**Project B (Queue), in Java.** The *Warehouse Conveyor Package Dispatch System*: a **circular queue in a fixed array of 5 slots**, written by hand (no `java.util.Queue`, no `ArrayList`, no shifting). Packages are dispatched first in, first out.
 
 **Language:** Java · **C version:** [circular_queue-array.c](circular_queue-array.c.md) · **Project overview:** [README.md](README.md) · **Stack counterpart:** [NavigationStack.java](../../Stacks/Search_and_Rescue_Backtrack/NavigationStack.java.md)
 
@@ -116,7 +116,7 @@ Checks `isEmpty()` first, so an empty belt gets the application's own message ("
 ### `main`
 
 ```java
-String line = readLine();
+String line = scanner.nextLine().trim();
 try {
     choice = Integer.parseInt(line);
 } catch (NumberFormatException e) {
@@ -124,31 +124,7 @@ try {
 }
 ```
 
-Every input is read as a **whole line**, then converted to a number. Bad input becomes `-1`, which falls through to `"Invalid option."` and can never crash the program. Reading full lines also means destinations **can contain spaces** ("Fort Portal" works), unlike the C version's `%29s`.
-
-### `readLine` — reading input without `Scanner`
-
-The program has **no imports**, so instead of `java.util.Scanner` it has its own small `readLine()` method:
-
-```java
-static String readLine() {
-    String line = "";
-    try {
-        int c = System.in.read();
-        while (c != -1 && c != '\n') {   // stop at the end of the line
-            if (c != '\r') {             // Windows adds \r before \n: skip it
-                line = line + (char) c;
-            }
-            c = System.in.read();
-        }
-    } catch (Exception e) {
-        // could not read input: return what we have so far
-    }
-    return line.trim();
-}
-```
-
-`System.in.read()` gives back the next typed character as a number, or −1 when there is no more input. The loop adds characters to `line` until it reaches the end of the line (`\n`). `System.in.read()` can throw an `IOException`, so the call sits inside `try`/`catch`. Catching the general `Exception` avoids having to import `java.io.IOException`.
+Every input is read as a **whole line** with `scanner.nextLine()`, then converted to a number. Bad input becomes `-1`, which falls through to `"Invalid option."` and can never crash the program. Reading full lines also means destinations **can contain spaces** ("Fort Portal" works), unlike the C version's `%29s`.
 
 The `switch` handles 1 (add), 2 (dispatch), 3 (peek), 4 (list), 5 (status: capacity, count, available, front and rear index) and 6 (exit). The `do … while (choice != 6)` loop runs the menu at least once.
 
@@ -202,16 +178,10 @@ Exiting...
 | Return a dequeued package | output parameter + `int` success flag | return the object, or `null` |
 | Dispatched slot | left as is (stale) | set to `null` for the garbage collector |
 | Package ID | automatic number | typed in by the user |
-| Destinations with spaces | no (`%29s`) | yes (`readLine()` reads the whole line) |
+| Destinations with spaces | no (`%29s`) | yes (`nextLine()`) |
 | Bad menu input | `scanf` check + clear the line | `parseInt` in `try/catch` |
 | Layers | single file of functions | model / data structure / application classes |
 
 ## What changed (simplified version)
 
-| Before | Now | Why |
-|---|---|---|
-| `import java.util.Scanner;` and `scanner.nextLine()` | A small `readLine()` method built on `System.in.read()` | No imports are needed. `System` is part of `java.lang` |
-| `scanner.close()` at the end of `main` | Removed | There is no `Scanner` to close |
-| `try { ... } catch { ... }` squeezed onto two lines | Spread over separate lines with braces | Easier to read |
-
-The queue itself (`ConveyorQueue`) and the menu options did not change, so the program behaves exactly as before.
+The program still uses `java.util.Scanner` to read what the user types; it is the standard, well-known way to read keyboard input. The only change is layout: `try { ... } catch { ... }` blocks that were squeezed onto two lines are now spread over separate lines with braces. The queue itself (`ConveyorQueue`) and the menu options did not change, so the program behaves exactly as before.

@@ -2,7 +2,7 @@
  * Warehouse Conveyor Package Dispatch System (Java)
  * ---------------------------------------------------
  * Implements a fixed-size circular array queue manually (no
- * imports, no ArrayList, no shifting of elements).
+ * java.util.Queue, no ArrayList, no shifting of elements).
  *
  * Circular-array invariants:
  *   front = index of the next package to be dispatched (dequeued)
@@ -15,6 +15,8 @@
  * Neither operation ever shifts array elements. The array stays fixed;
  * only front/rear/count move (and wrap around using modulo).
  */
+
+import java.util.Scanner;
 
 /* ---------- 1. System model ---------- */
 
@@ -143,26 +145,6 @@ class ConveyorQueue {
 
 public class ConveyorDispatch {
 
-    // Reads one line typed by the user, one character at a time.
-    // (This replaces Scanner, so no import is needed.)
-    //   System.in.read() returns the next character as a number,
-    //   or -1 when there is no more input.
-    static String readLine() {
-        String line = "";
-        try {
-            int c = System.in.read();
-            while (c != -1 && c != '\n') {   // stop at the end of the line
-                if (c != '\r') {             // Windows adds \r before \n: skip it
-                    line = line + (char) c;
-                }
-                c = System.in.read();
-            }
-        } catch (Exception e) {
-            // could not read input: return what we have so far
-        }
-        return line.trim();
-    }
-
     static void dispatchNextPackage(ConveyorQueue queue) {
         if (queue.isEmpty()) {
             System.out.println("No package available for dispatch.");
@@ -179,6 +161,7 @@ public class ConveyorDispatch {
 
     public static void main(String[] args) {
         ConveyorQueue queue = new ConveyorQueue();
+        Scanner scanner = new Scanner(System.in);   // reads what the user types
 
         int choice;
 
@@ -195,7 +178,7 @@ public class ConveyorDispatch {
             System.out.println("================================");
             System.out.print("Enter choice: ");
 
-            String line = readLine();
+            String line = scanner.nextLine().trim();
             try {
                 choice = Integer.parseInt(line);
             } catch (NumberFormatException e) {
@@ -205,10 +188,10 @@ public class ConveyorDispatch {
             switch (choice) {
                 case 1:
                     System.out.print("Enter package ID: ");
-                    String id = readLine();
+                    String id = scanner.nextLine().trim();
 
                     System.out.print("Enter destination: ");
-                    String destination = readLine();
+                    String destination = scanner.nextLine().trim();
 
                     queue.enqueue(new Package(id, destination));
                     break;
@@ -244,5 +227,6 @@ public class ConveyorDispatch {
 
         } while (choice != 6);
 
+        scanner.close();
     }
 }

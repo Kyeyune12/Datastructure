@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 /*
  * Project A: Search & Rescue Trail Backtrack Assistant
  * Data Structure: Stack (LIFO)
@@ -127,28 +129,9 @@ public class NavigationStack {
 
     /* ---------- Menu-driven main ---------- */
 
-    // Reads one line typed by the user, one character at a time.
-    // (This replaces Scanner, so no import is needed.)
-    //   System.in.read() returns the next character as a number,
-    //   or -1 when there is no more input.
-    static String readLine() {
-        String line = "";
-        try {
-            int c = System.in.read();
-            while (c != -1 && c != '\n') {   // stop at the end of the line
-                if (c != '\r') {             // Windows adds \r before \n: skip it
-                    line = line + (char) c;
-                }
-                c = System.in.read();
-            }
-        } catch (Exception e) {
-            // could not read input: return what we have so far
-        }
-        return line.trim();
-    }
-
     public static void main(String[] args) {
         NavigationStack rescue = new NavigationStack();
+        Scanner scanner = new Scanner(System.in);   // reads what the user types
         int choice = 0;
 
         System.out.println("=========================================");
@@ -168,7 +151,7 @@ public class NavigationStack {
             System.out.print("Choose an option: ");
 
             try {
-                choice = Integer.parseInt(readLine());
+                choice = Integer.parseInt(scanner.nextLine().trim());
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a number.");
                 continue;
@@ -177,7 +160,7 @@ public class NavigationStack {
             switch (choice) {
                 case 1: {
                     System.out.print("Enter junction name/ID: ");
-                    String junction = readLine();
+                    String junction = scanner.nextLine().trim();
                     rescue.push(junction);
                     break;
                 }
@@ -209,7 +192,7 @@ public class NavigationStack {
                     break;
                 case 8: {
                     System.out.print("Enter junction name to check: ");
-                    String junction = readLine();
+                    String junction = scanner.nextLine().trim();
                     boolean visited = rescue.alreadyVisited(junction);
                     System.out.println("[CHECK] \"" + junction + "\" already visited on this path: " + visited);
                     break;
@@ -223,5 +206,6 @@ public class NavigationStack {
 
         } while (choice != 9);
 
+        scanner.close();
     }
 }

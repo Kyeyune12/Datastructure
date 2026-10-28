@@ -19,7 +19,7 @@ Use the corresponding class name for lists, stacks and queues. `ExpressionEvalua
 
 ### Implementation policy: no collection shortcuts
 
-All data structures are implemented using raw arrays, custom node classes, explicit link updates, and explicit loops. There is no `ArrayList`, library `LinkedList`, `Stack`, `Queue`, `Deque`, `ArrayDeque`, collection-based sorting, `Arrays.sort`, `Arrays.copyOf`, or `System.arraycopy` in the delivered implementations. The Java files have no imports at all. The expression evaluator's stacks are plain arrays with a top index, the array stack has a fixed capacity, and the greedy programs sort with a hand-written bubble sort.
+All data structures are implemented using raw arrays, custom node classes, explicit link updates, and explicit loops. There is no `ArrayList`, library `LinkedList`, `Stack`, `Queue`, `Deque`, `ArrayDeque`, collection-based sorting, `Arrays.sort`, `Arrays.copyOf`, or `System.arraycopy` in the delivered implementations. The only import in the Java files is `java.util.Scanner`, used by the two menu programs to read keyboard input. The expression evaluator's stacks are plain arrays with a top index, the array stack has a fixed capacity, and the greedy programs sort with a hand-written bubble sort.
 
 Standard utilities provide exception types, null checks, pseudorandom numbers, lexical recognition, numeric parsing, arithmetic helpers and text output; they do not implement the data structures or algorithms being assessed. In particular, `StringBuilder` formats text and regular expressions recognize tokens; neither replaces the stack operations.
 
