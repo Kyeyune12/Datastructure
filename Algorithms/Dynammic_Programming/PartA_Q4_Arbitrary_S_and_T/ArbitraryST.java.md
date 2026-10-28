@@ -28,6 +28,7 @@ java ArbitraryST
 | `bcostFrom(s)` | The Q1 recurrence from any source: `j = s+1 … N` in numeric order (which is a topological order for this graph), scanning the edge list for edges into j |
 | `brute(u, t)` | A recursive depth-first search that tries **every** path from u to t and returns the cheapest. It is used only to check the DP |
 | `show(x)` | Prints `INF` for ∞ |
+| `path(s, t)` | Walks back from t to s using `d[]`, adding each vertex to the **front** of the string. Returns `"no path"` if t can't be reached |
 | `main` | Tests nine (s, t) pairs against `brute`, then runs `bcostFrom` once from each vertex to print the 12 × 12 distance matrix |
 
 ## Output
@@ -75,4 +76,15 @@ The matrix is **upper-triangular**: everything below the diagonal is "no path", 
 ## Notes
 
 - Numeric order works as a topological order only because this graph is numbered by stage. For an arbitrary graph, use the topological sort from Q2.
-- Rebuilding the path uses a `LinkedList` with `addFirst`, so the path comes out in source-to-target order without needing to be reversed.
+- Rebuilding the path adds each vertex to the front of a string (`x + " -> " + path`), so the path comes out in source-to-target order without needing to be reversed.
+
+## What changed (simplified version)
+
+| Before | Now | Why |
+| --- | --- | --- |
+| `import java.util.*` (`Arrays`, `LinkedList`, `StringJoiner`) | No imports | Only plain arrays and strings are used |
+| `Arrays.fill(bcost, INF)` and `Arrays.fill(d, 0)` | One `for` loop that sets both | No import |
+| The path was built in a `LinkedList` with `addFirst`, then joined with `StringJoiner` | A separate `path(s, t)` method adds each vertex to the front of a `String` | Same order, no library classes |
+| The distance matrix rows were built with `StringBuilder` and `String.format` | Printed directly with `System.out.printf` | Fewer steps |
+| An object (`new ArbitraryST()`) held the tables | The tables and methods are `static` | Nothing to construct |
+| Several statements squeezed onto one line, and loops or `if`s without braces | One statement per line, braces on every loop and `if`, and comments explaining each step | Easier to read and explain |

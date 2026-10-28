@@ -1,0 +1,11 @@
+Total bandwidth available: 100 Mbps
+
+User            Demand   Given    Priority  
+Online Exam     20       20       8         
+Video Call      30       30       5         
+Video Stream    40       40       3         
+Email           5        5        2         
+File Download   50       5        1         
+
+Bandwidth left unused: 0 Mbps
+Total benefit (priority x Mbps): 445

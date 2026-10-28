@@ -19,149 +19,244 @@
  *
  * Compile: javac GeneralGraph.java     Run: java GeneralGraph
  */
-import java.util.*;
-
 public class GeneralGraph {
-    static final int INF = Integer.MAX_VALUE / 4;
+    static final int INF = Integer.MAX_VALUE / 4;   // "infinity" (no path yet)
 
+    // Each edge is {from, to, cost}
     static final int[][] BASE = {
-        {1,2,9},{1,3,7},{1,4,3},{1,5,2},
-        {2,6,4},{2,7,2},{2,8,1},
-        {3,6,2},{3,7,7},
-        {4,8,11},
-        {5,7,11},{5,8,8},
-        {6,9,6},{6,10,5},
-        {7,9,4},{7,10,3},
-        {8,10,5},{8,11,6},
-        {9,12,4},{10,12,2},{11,12,5}
+        {1, 2, 9}, {1, 3, 7}, {1, 4, 3}, {1, 5, 2},
+        {2, 6, 4}, {2, 7, 2}, {2, 8, 1},
+        {3, 6, 2}, {3, 7, 7},
+        {4, 8, 11},
+        {5, 7, 11}, {5, 8, 8},
+        {6, 9, 6}, {6, 10, 5},
+        {7, 9, 4}, {7, 10, 3},
+        {8, 10, 5}, {8, 11, 6},
+        {9, 12, 4}, {10, 12, 2}, {11, 12, 5}
     };
 
-    /** Result of the re-designed algorithm. */
+    // What the re-designed algorithm found
     static class Result {
-        String method;
-        boolean negativeCycle;
-        int cost = INF;
-        List<Integer> path = new ArrayList<>();
+        String method;           // which method was used
+        boolean negativeCycle;   // true if a negative cycle was found
+        int cost = INF;          // shortest cost from s to t
+        String path = "";        // the path, like "1 -> 2 -> 7"
     }
 
-    /** Kahn's algorithm. Returns null if the graph has a cycle. */
-    static List<Integer> topoSort(int n, List<int[]> edges) {
+    // ---------- Step 1: topological sort (Kahn's algorithm) ----------
+    // Repeatedly take a vertex with no incoming edges, add it to the order,
+    // and "remove" its outgoing edges.
+    // Returns the order, or null if the graph has a cycle.
+    static int[] topoSort(int n, int[][] edges) {
+        // indeg[v] = number of edges coming INTO v
         int[] indeg = new int[n + 1];
-        List<List<Integer>> adj = new ArrayList<>();
-        for (int i = 0; i <= n; i++) adj.add(new ArrayList<>());
-        for (int[] e : edges) { adj.get(e[0]).add(e[1]); indeg[e[1]]++; }
-
-        Deque<Integer> q = new ArrayDeque<>();
-        for (int v = 1; v <= n; v++) if (indeg[v] == 0) q.add(v);
-        List<Integer> order = new ArrayList<>();
-        while (!q.isEmpty()) {
-            int u = q.poll();
-            order.add(u);
-            for (int v : adj.get(u)) if (--indeg[v] == 0) q.add(v);
+        for (int[] e : edges) {
+            indeg[e[1]]++;
         }
-        return order.size() == n ? order : null;
+
+        // a simple array queue: add at 'tail', remove at 'head'
+        int[] queue = new int[n];
+        int head = 0;
+        int tail = 0;
+
+        // start with every vertex that has no incoming edges
+        for (int v = 1; v <= n; v++) {
+            if (indeg[v] == 0) {
+                queue[tail] = v;
+                tail++;
+            }
+        }
+
+        int[] order = new int[n];
+        int count = 0;
+
+        while (head < tail) {
+            int u = queue[head];
+            head++;
+
+            order[count] = u;
+            count++;
+
+            // remove every edge out of u; a vertex whose count reaches 0 is ready
+            for (int[] e : edges) {
+                if (e[0] == u) {
+                    indeg[e[1]]--;
+                    if (indeg[e[1]] == 0) {
+                        queue[tail] = e[1];
+                        tail++;
+                    }
+                }
+            }
+        }
+
+        // if some vertices were never ready, they are stuck in a cycle
+        if (count == n) {
+            return order;
+        }
+        return null;
     }
 
-    static Result shortestPath(int n, List<int[]> edges, int s, int t) {
+    // ---------- Steps 2 and 3: shortest path ----------
+    static Result shortestPath(int n, int[][] edges, int s, int t) {
         Result r = new Result();
-        int[] bcost = new int[n + 1], d = new int[n + 1];
-        Arrays.fill(bcost, INF);
+
+        int[] bcost = new int[n + 1];
+        int[] d = new int[n + 1];
+        for (int v = 1; v <= n; v++) {
+            bcost[v] = INF;
+        }
         bcost[s] = 0;
 
-        List<List<int[]>> pred = new ArrayList<>();
-        for (int i = 0; i <= n; i++) pred.add(new ArrayList<>());
-        for (int[] e : edges) pred.get(e[1]).add(e);
+        int[] order = topoSort(n, edges);
 
-        List<Integer> order = topoSort(n, edges);
         if (order != null) {
+            // DAG: same BCOST rule as Q1, but in topological order
             r.method = "DAG -> BCOST in topological order";
-            for (int j : order)
-                for (int[] e : pred.get(j)) {
-                    int l = e[0], c = e[2];
+
+            for (int j : order) {
+                for (int[] e : edges) {
+                    int l = e[0];
+                    int to = e[1];
+                    int c = e[2];
+
+                    if (to != j) {
+                        continue;   // only edges that END at j
+                    }
                     if (bcost[l] != INF && bcost[l] + c < bcost[j]) {
                         bcost[j] = bcost[l] + c;
                         d[j] = l;
                     }
                 }
+            }
         } else {
+            // Cycle: Bellman-Ford. Check every edge, n - 1 times.
             r.method = "cycle found -> Bellman-Ford";
-            for (int pass = 1; pass < n; pass++)
-                for (int[] e : edges)
-                    if (bcost[e[0]] != INF && bcost[e[0]] + e[2] < bcost[e[1]]) {
-                        bcost[e[1]] = bcost[e[0]] + e[2];
-                        d[e[1]] = e[0];
+
+            for (int pass = 1; pass < n; pass++) {
+                for (int[] e : edges) {
+                    int from = e[0];
+                    int to = e[1];
+                    int c = e[2];
+
+                    if (bcost[from] != INF && bcost[from] + c < bcost[to]) {
+                        bcost[to] = bcost[from] + c;
+                        d[to] = from;
                     }
-            for (int[] e : edges)
-                if (bcost[e[0]] != INF && bcost[e[0]] + e[2] < bcost[e[1]]) {
+                }
+            }
+
+            // one more pass: if anything still gets cheaper, there is a negative cycle
+            for (int[] e : edges) {
+                int from = e[0];
+                int to = e[1];
+                int c = e[2];
+
+                if (bcost[from] != INF && bcost[from] + c < bcost[to]) {
                     r.negativeCycle = true;
                     return r;
                 }
+            }
         }
 
-        if (bcost[t] == INF) return r;
+        if (bcost[t] == INF) {
+            return r;   // t cannot be reached
+        }
         r.cost = bcost[t];
+
+        // walk back from t to s, adding each vertex to the FRONT of the path
+        r.path = "" + t;
         int x = t;
-        r.path.add(x);
-        while (x != s && r.path.size() <= n) { x = d[x]; r.path.add(x); }
-        Collections.reverse(r.path);
+        int steps = 0;
+        while (x != s && steps < n) {
+            x = d[x];
+            r.path = x + " -> " + r.path;
+            steps++;
+        }
         return r;
     }
 
-    /** The Q1 algorithm, unchanged: assumes numeric order == stage order. */
-    static int naiveBcost(int n, List<int[]> edges, int s, int t) {
+    // The Q1 algorithm, unchanged: assumes numeric order == stage order.
+    // Used in demo A to show that it fails on a relabelled graph.
+    static int naiveBcost(int n, int[][] edges, int s, int t) {
         int[] bcost = new int[n + 1];
-        Arrays.fill(bcost, INF);
+        for (int v = 1; v <= n; v++) {
+            bcost[v] = INF;
+        }
         bcost[s] = 0;
+
         for (int j = 1; j <= n; j++) {
-            if (j == s) continue;
-            for (int[] e : edges)
-                if (e[1] == j && bcost[e[0]] != INF && bcost[e[0]] + e[2] < bcost[j])
-                    bcost[j] = bcost[e[0]] + e[2];
+            if (j == s) {
+                continue;
+            }
+            for (int[] e : edges) {
+                int l = e[0];
+                int to = e[1];
+                int c = e[2];
+
+                if (to == j && bcost[l] != INF && bcost[l] + c < bcost[j]) {
+                    bcost[j] = bcost[l] + c;
+                }
+            }
         }
         return bcost[t];
     }
 
-    static void report(String title, int n, List<int[]> edges, int s, int t) {
+    // Runs the re-designed algorithm and prints what it found
+    static void report(String title, int n, int[][] edges, int s, int t) {
         System.out.println(title);
+
         Result r = shortestPath(n, edges, s, t);
         System.out.println("  Method: " + r.method);
-        if (r.negativeCycle)
+
+        if (r.negativeCycle) {
             System.out.println("  Result: NEGATIVE CYCLE reachable - shortest path undefined\n");
-        else if (r.cost == INF)
+        } else if (r.cost == INF) {
             System.out.println("  Result: no path from " + s + " to " + t + "\n");
-        else {
-            StringJoiner sj = new StringJoiner(" -> ");
-            for (int v : r.path) sj.add(String.valueOf(v));
-            System.out.println("  Shortest " + s + " -> " + t + " = " + r.cost + "   Path: " + sj + "\n");
+        } else {
+            System.out.println("  Shortest " + s + " -> " + t + " = " + r.cost + "   Path: " + r.path + "\n");
         }
     }
 
-    static List<int[]> copyBase() {
-        List<int[]> g = new ArrayList<>();
-        for (int[] e : BASE) g.add(e.clone());
+    // Returns a copy of BASE with one extra edge {u, v, w} added at the end
+    static int[][] baseWithEdge(int u, int v, int w) {
+        int[][] g = new int[BASE.length + 1][];
+        for (int i = 0; i < BASE.length; i++) {
+            g[i] = BASE[i];
+        }
+        g[BASE.length] = new int[]{u, v, w};
         return g;
     }
 
     public static void main(String[] args) {
-        // A) relabelled graph: newLabel[old]
+        // A) relabelled graph: vertex 'old' gets the name newLabel[old]
         int[] newLabel = {0, 7, 3, 12, 1, 9, 2, 11, 5, 10, 4, 8, 6};
-        List<int[]> g = new ArrayList<>();
-        for (int[] e : BASE) g.add(new int[]{newLabel[e[0]], newLabel[e[1]], e[2]});
-        int s = newLabel[1], t = newLabel[12];
+
+        int[][] g = new int[BASE.length][];
+        for (int i = 0; i < BASE.length; i++) {
+            int from = newLabel[BASE[i][0]];
+            int to = newLabel[BASE[i][1]];
+            int cost = BASE[i][2];
+            g[i] = new int[]{from, to, cost};
+        }
+
+        int s = newLabel[1];
+        int t = newLabel[12];
         System.out.println("A) Relabelled slide-20 graph (source is now " + s + ", target is now " + t + ")");
+
         int naive = naiveBcost(12, g, s, t);
-        if (naive >= INF) System.out.println("  Naive Q1 loop:  INF  (WRONG - predecessors not ready)");
-        else System.out.println("  Naive Q1 loop:  " + naive + "  (" + (naive == 16 ? "correct by luck" : "WRONG") + ")");
+        if (naive >= INF) {
+            System.out.println("  Naive Q1 loop:  INF  (WRONG - predecessors not ready)");
+        } else if (naive == 16) {
+            System.out.println("  Naive Q1 loop:  " + naive + "  (correct by luck)");
+        } else {
+            System.out.println("  Naive Q1 loop:  " + naive + "  (WRONG)");
+        }
         report("  Re-designed algorithm:", 12, g, s, t);
 
-        // B) positive cycle
-        g = copyBase();
-        g.add(new int[]{10, 7, 1});
-        report("B) Original graph + edge 10->7 (cost 1)  [cycle 7->10->7]", 12, g, 1, 12);
+        // B) positive cycle 7 -> 10 -> 7
+        report("B) Original graph + edge 10->7 (cost 1)  [cycle 7->10->7]", 12, baseWithEdge(10, 7, 1), 1, 12);
 
-        // C) negative cycle
-        g = copyBase();
-        g.add(new int[]{10, 7, -6});
-        report("C) Original graph + edge 10->7 (cost -6) [cycle weight -3]", 12, g, 1, 12);
+        // C) negative cycle 7 -> 10 -> 7 with total weight 3 + (-6) = -3
+        report("C) Original graph + edge 10->7 (cost -6) [cycle weight -3]", 12, baseWithEdge(10, 7, -6), 1, 12);
     }
 }

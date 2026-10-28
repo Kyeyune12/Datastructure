@@ -19,7 +19,7 @@ Q1 visits j = 1, 2, …, n in numeric order. That works only because every edge 
 
 1. **Topological sort** using Kahn's algorithm (`topoSort`):
    - count the incoming edges of every vertex;
-   - start with a queue of every vertex that has no incoming edges;
+   - start with a queue of every vertex that has no incoming edges (the queue is a plain array with a `head` and a `tail` index);
    - repeatedly remove a vertex, add it to the order, and decrease the in-degree of its successors, queueing any that reach 0.
 
    If every vertex ends up in the order, the graph has no cycles. Otherwise it has a cycle, and `topoSort` returns `null`.
@@ -35,12 +35,12 @@ Q1 visits j = 1, 2, …, n in numeric order. That works only because every edge 
 | Member | Purpose |
 | --- | --- |
 | `BASE` | The 21 lecture edges |
-| `Result` | Holds the `method` used, `negativeCycle`, the `cost` and the `path` |
-| `topoSort(n, edges)` | Kahn's algorithm. Returns the order, or `null` if there is a cycle |
+| `Result` | Holds the `method` used, `negativeCycle`, the `cost` and the `path` (as a ready-to-print string) |
+| `topoSort(n, edges)` | Kahn's algorithm. Returns the order as an `int[]`, or `null` if there is a cycle |
 | `shortestPath(n, edges, s, t)` | The redesigned algorithm described above |
 | `naiveBcost(n, edges, s, t)` | The Q1 loop, for comparison |
 | `report(...)` | Prints the method used and the result |
-| `copyBase()` | A fresh copy of the edges, so each demo can add its own edge |
+| `baseWithEdge(u, v, w)` | A new edge array: all of `BASE` plus one extra edge, so demos B and C can add their own edge |
 
 ## The three demos and their output
 
@@ -68,11 +68,26 @@ C) Original graph + edge 10->7 (cost -6) [cycle weight -3]
 
 | Case | Time | Space |
 | --- | --- | --- |
-| Topological sort | O(n + e) | O(n + e) |
-| DAG (BCOST in topological order) | O(n + e) | O(n) |
+| Topological sort | O(n · e) as written (it scans all edges for each vertex it removes) | O(n) |
+| DAG (BCOST in topological order) | O(n · e) as written (it scans all edges for each vertex) | O(n) |
 | Bellman-Ford (graph with a cycle) | O(n · e) | O(n) |
 
 ## Notes
 
-- Rebuilding the path is capped at n steps (`r.path.size() <= n`) as a safety net.
+- The path is built by walking back from t with `d[]` and adding each vertex to the **front** of the string (`x + " -> " + path`), so it comes out in source-to-target order with no reversing. The walk is capped at n steps as a safety net.
+- With adjacency lists, the topological sort and the DAG pass would be O(n + e). Scanning the plain edge array keeps the code simple, and on this 12-vertex graph the difference is invisible.
 - If t can't be reached, `cost` stays ∞ and the report says "no path".
+
+## What changed (simplified version)
+
+| Before | Now | Why |
+| --- | --- | --- |
+| `import java.util.*` (`List`, `ArrayList`, `Deque`, `ArrayDeque`, `Arrays`, `Collections`, `StringJoiner`) | No imports | Only plain arrays are used |
+| Edges stored in a `List<int[]>` | Edges stored in an `int[][]` | Same data, simpler type |
+| Adjacency and predecessor lists (`List<List<...>>`) | Loops scan the edge array and skip edges that don't match | No list-of-lists to explain. Costs O(n · e) instead of O(n + e) |
+| `ArrayDeque` as the queue in Kahn's algorithm | An `int[]` with `head` and `tail` indexes | The simplest possible queue |
+| `topoSort` returned a `List<Integer>` | Returns an `int[]` | Plain array |
+| `Arrays.fill(bcost, INF)` | A `for` loop | No import |
+| The path was a `List`, reversed with `Collections.reverse`, joined with `StringJoiner` | The path is a `String`, built by adding each vertex to the front | No reversing or joining needed |
+| `copyBase()`, then `g.add(...)` to add an edge | `baseWithEdge(u, v, w)` | One call per demo |
+| Several statements squeezed onto one line, and loops or `if`s without braces | One statement per line, braces on every loop and `if`, and comments explaining each step | Easier to read and explain |

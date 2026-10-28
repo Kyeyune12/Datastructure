@@ -84,3 +84,14 @@ Vertices on / reaching a negative cycle (A(i,i) < 0): 1 2 3
 
 - **When there is a negative cycle, the numbers in the matrix are not real distances.** They are simply where the loop happened to stop. For example, A(1, 4) = −1 above, but 1 → 4 has no shortest path at all: you can go round the cycle as many times as you like before taking 3 → 4. The rule is that a pair (i, j) has no shortest path when some vertex k on a negative cycle can be reached from i and can itself reach j. That includes 1 → 4, 2 → 4 and 3 → 4 here, not only the pairs among 1, 2 and 3.
 - The sums aren't clamped. With a very strongly negative cycle on a large graph, values could keep falling until they overflow an `int`. That is harmless in these small demos.
+
+## What changed (simplified version)
+
+| Before | Now | Why |
+| --- | --- | --- |
+| `java.util.Arrays.fill(dist, INF)` in `dijkstra` (the library class was named in full instead of imported) | A `for` loop that sets every distance to `INF` | No library classes at all |
+| The constructor set `A` and `next` with `?:` expressions | An `if`/`else` for the diagonal and for everything else | Easier to read |
+| `printMatrix` and `printPath` used `StringBuilder` | Lines are printed directly with `System.out.printf`, and the path is a plain `String` | Fewer steps |
+| The loop counter in `dijkstra` was called `it` | Renamed `round`, with comments on each step of the greedy choice | Clearer |
+| `main` called several `addEdge`s on one line | One call per line | Easier to follow |
+| Several statements squeezed onto one line, and loops or `if`s without braces | One statement per line, braces on every loop and `if`, and comments explaining each step | Easier to read and explain |

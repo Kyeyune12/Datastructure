@@ -1,80 +1,151 @@
-import java.util.NoSuchElementException;
-
 /**
  * javac QueueArrayAndLinkedList.java && java QueueArrayAndLinkedList
- * FIFO queues, O(1) enqueue/dequeue/peek. Circular array has fixed positive
- * capacity, head points at the oldest item, and size distinguishes empty/full.
- * Linked queue holds both head and tail; last removal resets both. Its optional
- * capacity limit supports backpressure. Default limit is Integer.MAX_VALUE,
- * but isFull is NOT a heap-availability test: allocation can fail earlier.
- * Array storage O(capacity); linked storage O(size). Not thread-safe.
+ *
+ * A queue is FIFO: the FIRST item added is the FIRST item removed
+ * (like people in a line at the bank).
+ *
+ * Two versions with the same operations:
+ *   1. CircularArrayQueue - items live in an array; 'front' moves forward
+ *      and wraps back to 0 at the end of the array (using % capacity).
+ *   2. LinkedQueue - items live in linked nodes; add at the tail,
+ *      remove from the head.
+ *
+ * enqueue, dequeue and peek are all O(1).
  */
-public final class QueueArrayAndLinkedList {
-    private QueueArrayAndLinkedList() { }
-    public static final class CircularArrayQueue {
-        private final int[] data;
-        private int head,size;
-        public CircularArrayQueue(int capacity) {
-            if (capacity<=0) throw new IllegalArgumentException("positive capacity required");
-            data=new int[capacity];
+public class QueueArrayAndLinkedList {
+
+    // ================= 1. Queue using a circular array =================
+
+    static class CircularArrayQueue {
+        private int[] data;
+        private int front;   // index of the oldest item (the next one to leave)
+        private int size;    // how many items are in the queue
+
+        CircularArrayQueue(int capacity) {
+            data = new int[capacity];
         }
-        public int size() { return size; }
-        public boolean isEmpty() { return size==0; }
-        public boolean isFull() { return size==data.length; }
-        public void enqueue(int value) {
-            if (isFull()) throw new IllegalStateException("full queue");
-            int tail=(int)(((long)head+size)%data.length);
-            data[tail]=value; size++;
+
+        boolean isEmpty() {
+            return size == 0;
         }
-        public int peek() {
-            if (isEmpty()) throw new NoSuchElementException("empty queue");
-            return data[head];
+
+        boolean isFull() {
+            return size == data.length;
         }
-        public int dequeue() {
-            int value=peek(); data[head]=0;
-            head=(head+1)%data.length; size--; return value;
+
+        // add a value at the back
+        void enqueue(int value) {
+            if (isFull()) {
+                throw new IllegalStateException("full queue");
+            }
+            // the back of the queue is 'size' steps after the front;
+            // % data.length wraps it back to 0 when it passes the end
+            int rear = (front + size) % data.length;
+            data[rear] = value;
+            size++;
         }
-        public void clear() { for (int i=0; i<data.length; i++) data[i]=0; head=0; size=0; }
+
+        // look at the front value without removing it
+        int peek() {
+            if (isEmpty()) {
+                throw new IllegalStateException("empty queue");
+            }
+            return data[front];
+        }
+
+        // remove and return the front value
+        int dequeue() {
+            int value = peek();
+            front = (front + 1) % data.length;   // move front forward, wrapping around
+            size--;
+            return value;
+        }
     }
-    public static final class LinkedQueue {
-        private static final class Node {
-            final int value; Node next;
-            Node(int value) { this.value=value; }
+
+    // ================= 2. Queue using a linked list =================
+
+    static class LinkedQueue {
+
+        private static class Node {
+            int value;
+            Node next;
+
+            Node(int value) {
+                this.value = value;
+            }
         }
-        private final int capacity;
-        private Node head,tail;
+
+        private Node head;   // front of the queue: items leave from here
+        private Node tail;   // back of the queue: items join here
         private int size;
-        public LinkedQueue() { this(Integer.MAX_VALUE); }
-        public LinkedQueue(int capacity) {
-            if (capacity<=0) throw new IllegalArgumentException("positive capacity required");
-            this.capacity=capacity;
+
+        boolean isEmpty() {
+            return size == 0;
         }
-        public int size() { return size; }
-        public boolean isEmpty() { return size==0; }
-        public boolean isFull() { return size==capacity; }
-        public void enqueue(int value) {
-            if (isFull()) throw new IllegalStateException("full queue");
-            Node n=new Node(value);
-            if (tail==null) head=n; else tail.next=n;
-            tail=n; size++;
+
+        // add a value at the back
+        void enqueue(int value) {
+            Node newNode = new Node(value);
+
+            if (tail == null) {
+                head = newNode;        // queue was empty
+            } else {
+                tail.next = newNode;   // old back node points to the new one
+            }
+            tail = newNode;
+            size++;
         }
-        public int peek() {
-            if (isEmpty()) throw new NoSuchElementException("empty queue");
+
+        // look at the front value without removing it
+        int peek() {
+            if (isEmpty()) {
+                throw new IllegalStateException("empty queue");
+            }
             return head.value;
         }
-        public int dequeue() {
-            int value=peek(); head=head.next;
-            if (--size==0) tail=null; return value;
+
+        // remove and return the front value
+        int dequeue() {
+            int value = peek();
+            head = head.next;
+
+            if (head == null) {
+                tail = null;           // queue is now empty
+            }
+            size--;
+            return value;
         }
-        public void clear() { head=null; tail=null; size=0; }
     }
+
     public static void main(String[] args) {
-        CircularArrayQueue a=new CircularArrayQueue(3); LinkedQueue b=new LinkedQueue(3);
-        for (int x : new int[]{10,20,30}) { a.enqueue(x); b.enqueue(x); }
-        System.out.println("Full: "+a.isFull()+", "+b.isFull());
-        System.out.println(a.dequeue()+" = "+b.dequeue());
-        a.enqueue(40); b.enqueue(40); // Wrap-around in the array queue.
-        System.out.println("Peek: "+a.peek()+", "+b.peek());
-        while (!a.isEmpty()) System.out.println(a.dequeue()+" = "+b.dequeue());
+        CircularArrayQueue a = new CircularArrayQueue(3);
+        LinkedQueue b = new LinkedQueue();
+
+        // add 10, 20, 30 to both queues
+        a.enqueue(10);
+        b.enqueue(10);
+
+        a.enqueue(20);
+        b.enqueue(20);
+
+        a.enqueue(30);
+        b.enqueue(30);
+
+        System.out.println("Array queue full: " + a.isFull());
+
+        // remove 10 from both
+        System.out.println(a.dequeue() + " = " + b.dequeue());
+
+        // add 40: in the array queue this wraps around to index 0
+        a.enqueue(40);
+        b.enqueue(40);
+        System.out.println("Peek: " + a.peek() + ", " + b.peek());
+
+        // empty both queues: items come out in the order they went in
+        while (!a.isEmpty()) {
+            int fromArray = a.dequeue();
+            int fromLinked = b.dequeue();
+            System.out.println(fromArray + " = " + fromLinked);
+        }
     }
 }

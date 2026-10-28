@@ -19,7 +19,7 @@ Use the corresponding class name for lists, stacks and queues. `ExpressionEvalua
 
 ### Implementation policy: no collection shortcuts
 
-All data structures are implemented using raw arrays, custom node classes, explicit link updates, and explicit loops. There is no `ArrayList`, library `LinkedList`, `Stack`, `Queue`, `Deque`, `ArrayDeque`, collection-based sorting, `Arrays.sort`, `Arrays.copyOf`, or `System.arraycopy` in the delivered implementations. Even the expression evaluator's operator/value stacks and token list are hand-written. Array-stack expansion allocates a new array and copies each element in a visible loop. Greedy preprocessing uses a hand-written merge sort.
+All data structures are implemented using raw arrays, custom node classes, explicit link updates, and explicit loops. There is no `ArrayList`, library `LinkedList`, `Stack`, `Queue`, `Deque`, `ArrayDeque`, collection-based sorting, `Arrays.sort`, `Arrays.copyOf`, or `System.arraycopy` in the delivered implementations. The Java files have no imports at all. The expression evaluator's stacks are plain arrays with a top index, the array stack has a fixed capacity, and the greedy programs sort with a hand-written bubble sort.
 
 Standard utilities provide exception types, null checks, pseudorandom numbers, lexical recognition, numeric parsing, arithmetic helpers and text output; they do not implement the data structures or algorithms being assessed. In particular, `StringBuilder` formats text and regular expressions recognize tokens; neither replaces the stack operations.
 
@@ -142,7 +142,7 @@ At position $i=n-1,n-2,\ldots,1$, choose $j$ uniformly from $0$ through $i$ and 
 
 $$\frac1n\cdot\frac1{n-1}\cdots\frac12=\frac1{n!}.$$
 
-There are $n-1$ swaps, so the algorithm is $\Theta(n)$ with $O(1)$ auxiliary storage in the unit-cost random-choice model. `% bound` applied directly to a random integer introduces bias unless the source range is divisible by the bound. Java uses bounded `nextInt`; the C implementation rejects the excess part of `rand()`'s range before taking the remainder. Rejection gives expected constant-time random choices, not a finite worst-case retry guarantee. Uniformity is conditional on independent uniform random draws; standard pseudorandom generators have finite state and are not information-theoretically perfect or suitable for security-sensitive lotteries.
+There are $n-1$ swaps, so the algorithm is $\Theta(n)$ with $O(1)$ auxiliary storage in the unit-cost random-choice model. `% bound` applied directly to a random integer introduces bias unless the source range is divisible by the bound. Java computes `(int) (Math.random() * (i + 1))`, which scales a uniform double in [0, 1) to an index from 0 to i; the C implementation rejects the excess part of `rand()`'s range before taking the remainder. Rejection gives expected constant-time random choices, not a finite worst-case retry guarantee. Uniformity is conditional on independent uniform random draws; standard pseudorandom generators have finite state and are not information-theoretically perfect or suitable for security-sensitive lotteries.
 
 ## 7. Verification record
 

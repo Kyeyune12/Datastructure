@@ -1,6 +1,6 @@
 # ExpressionEvaluator.java
 
-Converts arithmetic expressions from **infix** (`3 + 4 * 2`) to **postfix** and **prefix**, then evaluates them. It is built entirely on its own linked-list stack; no Java collection classes are used.
+Converts arithmetic expressions from **infix** (`3 + 4 * 2`) to **postfix** and **prefix** using stacks, then evaluates the postfix to get a number. Each stack is a plain array plus a `top` index; no Java library classes are used.
 
 **Language:** Java · **Theory and traces:** [NotationDemonstration.md](NotationDemonstration.md) · **Stack basics:** [StackArrayAndLinkedList.java](StackArrayAndLinkedList.java.md)
 
@@ -9,74 +9,108 @@ Converts arithmetic expressions from **infix** (`3 + 4 * 2`) to **postfix** and 
 ```sh
 javac ExpressionEvaluator.java
 
-java ExpressionEvaluator                            # built-in example
-java ExpressionEvaluator "-2^2 + 3*(4+5)"           # convert and evaluate your own infix expression
-java ExpressionEvaluator --postfix "2 3 2 ^ ^"      # evaluate a postfix expression directly
+java ExpressionEvaluator                          # built-in example
+java ExpressionEvaluator "2 ^ 3 ^ 2"              # your own expression
+java ExpressionEvaluator "(1 + 2) * 3.5"
 ```
 
-Wrap the whole expression in quotes so the shell passes it as one argument.
+Wrap the expression in quotes so it reaches the program as one piece.
 
 ## What it supports
 
-- **Numbers:** `42`, `3.5`, `.5`, `1e-3`.
-- **Names** such as `x`, which are allowed only when converting, not when evaluating.
-- **Operators:** `+ - * / ^`, plus brackets.
-- **Unary signs:** a `-` or `+` with nothing on its left, as in `-2` or `3*-x`. In postfix and prefix output they are written as **`neg`** and **`pos`**.
-- **Precedence**, from highest to lowest: `^`, then the unary signs, then `* /`, then `+ -`.
-  - `^` is **right-associative**: `2^3^2 = 2^(3^2) = 512`.
-  - `^` binds tighter than a leading minus: `-2^2 = -(2^2) = -4`. This matches normal maths.
+- **Numbers:** whole numbers and decimals, such as `42` or `3.5`.
+- **Operators:** `+ - * / ^`, plus brackets `( )`.
+- **Precedence**, from highest to lowest: `^`, then `* /`, then `+ -`.
+- `^` is **right-associative**: `2 ^ 3 ^ 2 = 2 ^ (3 ^ 2) = 2 ^ 9 = 512`. The other operators work left to right.
 
-It does not support implicit multiplication (`2x`) or functions (`sin`).
+It does **not** support negative numbers written with a leading minus (like `-2`), variable names, or functions such as `sin`.
 
-## How it is built
+## What is inside
 
-| Part | What it does |
+| Method | What it does |
 | --- | --- |
-| `Stack<T>` *(private)* | A hand-written generic linked stack: `push`, `pop`, `peek`, `isEmpty`, `size`. Popping an empty stack throws an error |
-| `Token` *(private)* | A singly linked list of token strings |
-| `tokens(expr)` | Splits an infix string into tokens with a regular expression: numbers, names, operators and brackets. It rejects invalid characters and the reserved words `neg`/`pos` |
-| `infixToPostfix(expr)` | The **shunting-yard** algorithm (below) |
-| `infixToPrefix(expr)` | Builds an **expression tree** from the postfix, then reads it out in preorder |
-| `evaluatePostfix(expr)` | Evaluates postfix using a stack of `Double` values |
+| `isOperator(c)` | True for `+ - * / ^` |
+| `precedence(op)` | `^` → 3, `* /` → 2, `+ -` → 1, `(` → 0 |
+| `isOperatorToken(token)` | True if a piece of text is a single operator, like `"+"` |
+| `infixToPostfix(infix)` | The **shunting-yard** algorithm (below) |
+| `mustPopFirst(onStack, incoming)` | Decides whether the operator on the stack must be written out before the new one is pushed |
+| `infixToPrefix(infix)` | Builds the prefix form from the postfix, using a stack of strings |
+| `evaluatePostfix(postfix)` | Works out the answer using a stack of numbers |
+| `calculate(left, op, right)` | Does one operation, such as 6 / 2 |
+
+### How the stacks work
+
+Every stack is an array and a `top` index:
+
+```java
+char[] stack = new char[infix.length()];
+int top = -1;                 // -1 means empty
+
+top++;                        // push c
+stack[top] = c;
+
+char c = stack[top];          // pop
+top--;
+```
 
 ### 1. Infix to postfix (shunting-yard)
 
-The code reads tokens left to right, keeping a stack of operators and a flag `needOperand`.
+Read the expression left to right:
 
-- **Number or name:** write it to the output.
-- **`(`:** push it.
-- **`)`:** pop operators to the output until the matching `(` is reached, then discard the `(`.
-- **Binary operator:** first pop every operator on top of the stack that should be done before it: those with higher precedence, and those with *equal* precedence unless the new operator is `^` (which is right-associative). Then push the new operator.
-- **`+` or `-` when an operand was expected:** it is a unary sign, so push `pos` or `neg`.
-- **End of input:** pop everything left on the stack. A leftover `(` means the brackets don't match.
+- **Space:** skip it.
+- **Number:** read all its digits (and any `.`) and write the number to the output.
+- **`(`:** push it on the stack.
+- **`)`:** pop operators to the output until the matching `(` is reached, then throw the `(` away.
+- **Operator:** first pop operators that must be done *before* this one (`mustPopFirst`): those with higher precedence, and those with equal precedence, unless the new operator is `^`. Then push the new operator.
+- **End of input:** pop everything left on the stack to the output.
 
-`needOperand` is what catches mistakes such as `2 +`, `) 3` or `2 3`, with a clear error message.
+**Trace** for `3 + 4 * 2`:
 
-### 2. Infix to prefix (with a tree)
+| Read | Output | Stack |
+| --- | --- | --- |
+| 3 | `3` | |
+| + | `3` | `+` |
+| 4 | `3 4` | `+` |
+| * | `3 4` | `+ *` (`*` is higher than `+`, so nothing is popped) |
+| 2 | `3 4 2` | `+ *` |
+| end | `3 4 2 * +` | |
 
-1. Read the postfix tokens and build a tree:
-   - an operand becomes a leaf;
-   - a binary operator pops two subtrees and becomes their parent;
-   - `neg`/`pos` pops one subtree.
-2. Print the tree in **preorder** (node, then left subtree, then right subtree) using an explicit stack, pushing the right child before the left.
+### 2. Infix to prefix
 
-This is a direct use of **depth-first tree traversal**: preorder of an expression tree *is* prefix notation, and postorder is postfix.
+First get the postfix, then read it left to right with a stack of **strings**:
+
+- **Number:** push it.
+- **Operator:** pop the right part, then the left part, and push `"operator left right"`.
+
+For `3 4 2 * +`: push `3`, push `4`, push `2`; `*` makes `* 4 2`; `+` makes `+ 3 * 4 2`. The one string left on the stack is the prefix form.
 
 ### 3. Evaluating postfix
 
-- **Number:** push it.
-- **Binary operator:** pop the right operand, then the left (in that order), compute, and push the result.
-- **`neg`/`pos`:** pop one value and push the result.
-- **At the end:** exactly one value must be left on the stack.
+Same idea, but with a stack of **numbers**:
 
-Errors are reported for too few operands, extra operands, division by zero, invalid numbers, and results that are not finite (overflow to ∞ or NaN).
+- **Number:** push it.
+- **Operator:** pop the right number, then the left one (the order matters for `-`, `/` and `^`), work out the answer with `calculate`, and push it.
+- **At the end:** exactly one number must be left. That is the result.
+
+## Errors
+
+| Input | Message |
+| --- | --- |
+| `10/(5-5)` | `Error: division by zero` |
+| `(1+2` | `Error: unmatched (` |
+| `1+2)` | `Error: unmatched )` |
+| `2 # 3` | `Error: invalid character: #` |
+| `2 +` or `-2` | `Error: not enough numbers for +` (or `-`) |
+| `2 3` | `Error: invalid expression` (two numbers with no operator) |
+
+The "not enough numbers" and "invalid expression" checks are in both `infixToPrefix` and `evaluatePostfix`: an operator needs two items on the stack, and a correct expression leaves exactly one item at the end.
 
 ## Output
 
 Built-in example:
 
 ```
-Infix:   3 + 4 * 2 / (1 - 5)^2
+Infix:   3 + 4 * 2 / (1 - 5) ^ 2
 Postfix: 3 4 2 * 1 5 - 2 ^ / +
 Prefix:  + 3 / * 4 2 ^ - 1 5 2
 Result:  3.5
@@ -84,27 +118,30 @@ Result:  3.5
 
 That is 3 + (4·2) / (−4)² = 3 + 8/16 = 3.5.
 
-More runs:
+Another run:
 
 ```
-$ java ExpressionEvaluator "-2^2 + 3*(4+5)"
-Infix:   -2^2 + 3*(4+5)
-Postfix: 2 2 ^ neg 3 4 5 + * +
-Prefix:  + neg ^ 2 2 * 3 + 4 5
-Result:  23.0
-
-$ java ExpressionEvaluator --postfix "2 3 2 ^ ^"
-512.0
-
-$ java ExpressionEvaluator "2 +"
-Error: empty/incomplete expression
+$ java ExpressionEvaluator "2^3^2"
+Infix:   2^3^2
+Postfix: 2 3 2 ^ ^
+Prefix:  ^ 2 ^ 3 2
+Result:  512.0
 ```
 
 ## Complexity
 
-For an input of length L, each conversion and the evaluation take **O(L) time and O(L) space**, counting each arithmetic operation as constant time. Every token is pushed and popped at most once.
+For an expression of length L, each conversion and the evaluation take **O(L) time and O(L) space**, because every token is pushed and popped at most once.
 
-## Notes
+## What changed (simplified version)
 
-- Arithmetic uses `double`, so results like `0.1 + 0.2` are approximate.
-- The program exits with status 1 and prints `Error: …` for any invalid input.
+| Before | Now | Why |
+| --- | --- | --- |
+| `import java.util.regex.Pattern`, `Matcher` and `java.util.Objects` | Reads the expression one character at a time | No imports, and every step can be traced by hand |
+| A generic linked `Stack<T>` class and a linked `Token` list | Plain arrays with a `top` index | The simplest possible stack |
+| Prefix built from an **expression tree**, then printed in preorder | Prefix built from the postfix with a stack of strings | Same answer, far less code |
+| Unary signs (`-2`, written `neg`/`pos`), variable names and scientific notation (`1e-3`) | Removed | Keeps the grammar small: numbers, `+ - * / ^` and brackets |
+| A `needOperand` flag to catch errors like `2 +` | Removed. Brackets and bad characters are still checked | Shorter code |
+| A `--postfix` command-line option | Removed | Only infix input now |
+| The precedence test was one long `while` condition | Moved into its own method, `mustPopFirst`, with comments | Easier to read |
+| `switch` on the operator inside the evaluator | A separate `calculate` method using `if` statements | Each operation on its own line |
+| Code squeezed onto single lines | One statement per line, braces everywhere, and comments explaining each rule | Easier to follow |
