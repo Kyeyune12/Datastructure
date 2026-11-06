@@ -1,0 +1,5 @@
+Merge sort: 1 2 3 7 8 9
+Quick sort: 1 2 3 4 4
+Index of 7: 3
+Recursive index of 7: 3
+Absent 100: -1

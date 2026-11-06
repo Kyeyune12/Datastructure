@@ -15,7 +15,7 @@ gcc -std=c11 -Wall -Wextra -Wpedantic -Werror array_shuffle.c -o shuffle
 ./shuffle
 ```
 
-Use the corresponding class name for lists, stacks and queues. `ExpressionEvaluator` additionally accepts a quoted expression. The greedy and divide-and-conquer chapters contain complete Java programs in fenced blocks: save each block using the filename specified above it, then compile and run. They remain in their required Markdown files to preserve the requested archive structure.
+Use the corresponding class name for lists, stacks, queues and trees; every Java program has a C twin with the same output. `ExpressionEvaluator` additionally accepts a quoted expression. The greedy and divide-and-conquer programs (`GreedyAlgorithms.java`, `DivideAndConquerAlgorithms.java`) used to be only code blocks inside their Markdown chapters; they are now separate source files next to those chapters, and the chapters still contain the same code for reading.
 
 ### Implementation policy: no collection shortcuts
 
