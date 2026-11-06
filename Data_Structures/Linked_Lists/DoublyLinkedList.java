@@ -1,90 +1,224 @@
-import java.util.NoSuchElementException;
-
 /**
  * javac DoublyLinkedList.java && java DoublyLinkedList
- * head.prev=null, tail.next=null; x.next.prev=x and x.prev.next=x where defined.
- * End insertion/deletion O(1); indexed lookup O(min(i,n-1-i)); search O(n).
- * Two links per node trade memory for backward traversal and O(1) unlinking
- * once a node is located. Private nodes prevent external invariant corruption.
- * Integer values, zero-based indices, no sentinel data values; not thread-safe.
+ *
+ * A doubly linked list: each node links to the NEXT node AND the PREVIOUS node,
+ * so the list can be walked forwards and backwards.
+ *
+ *   null <-- [10] <--> [20] <--> [30] --> null
+ *            head                tail
+ *
+ * Insert/delete at either end is O(1); everything else is O(n).
  */
-public final class DoublyLinkedList {
-    private static final class Node {
-        final int value; Node prev,next;
-        Node(int value) { this.value=value; }
-    }
-    private Node head,tail;
-    private int size;
-    public int size() { return size; }
-    public boolean isEmpty() { return size==0; }
-    private void room() { if (size==Integer.MAX_VALUE) throw new IllegalStateException("size overflow"); }
-    private Node nodeAt(int index) {
-        if (index<0 || index>=size) throw new IndexOutOfBoundsException("index "+index);
-        if (index<size/2) {
-            Node p=head; for (int i=0; i<index; i++) p=p.next; return p;
+public class DoublyLinkedList {
+
+    // One box in the chain
+    private static class Node {
+        int value;
+        Node prev;   // the node before this one (null for the first node)
+        Node next;   // the node after this one (null for the last node)
+
+        Node(int value) {
+            this.value = value;
         }
-        Node p=tail; for (int i=size-1; i>index; i--) p=p.prev; return p;
     }
+
+    private Node head;   // first node
+    private Node tail;   // last node
+    private int size;    // number of nodes
+
+    public int size() {
+        return size;
+    }
+
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    // Walks from the head to the node at the given position
+    private Node nodeAt(int index) {
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("index " + index);
+        }
+
+        Node current = head;
+        for (int i = 0; i < index; i++) {
+            current = current.next;
+        }
+        return current;
+    }
+
+    // Adds a value at the front of the list
     public void insertHead(int value) {
-        room(); Node n=new Node(value); n.next=head;
-        if (head==null) tail=n; else head.prev=n;
-        head=n; size++;
+        Node newNode = new Node(value);
+        newNode.next = head;
+
+        if (head == null) {
+            tail = newNode;          // list was empty
+        } else {
+            head.prev = newNode;     // old first node points back to the new node
+        }
+        head = newNode;
+        size++;
     }
+
+    // Adds a value at the end of the list
     public void insertTail(int value) {
-        room(); Node n=new Node(value); n.prev=tail;
-        if (tail==null) head=n; else tail.next=n;
-        tail=n; size++;
+        Node newNode = new Node(value);
+        newNode.prev = tail;
+
+        if (tail == null) {
+            head = newNode;          // list was empty
+        } else {
+            tail.next = newNode;     // old last node points forward to the new node
+        }
+        tail = newNode;
+        size++;
     }
+
+    // Adds a value at a position (0 = front, size = end)
     public void insert(int index, int value) {
-        if (index<0 || index>size) throw new IndexOutOfBoundsException("index "+index);
-        if (index==0) { insertHead(value); return; }
-        if (index==size) { insertTail(value); return; }
-        room(); Node after=nodeAt(index), n=new Node(value);
-        n.prev=after.prev; n.next=after; after.prev.next=n; after.prev=n; size++;
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException("index " + index);
+        }
+        if (index == 0) {
+            insertHead(value);
+            return;
+        }
+        if (index == size) {
+            insertTail(value);
+            return;
+        }
+
+        // the new node goes between 'before' and 'after'
+        Node after = nodeAt(index);
+        Node before = after.prev;
+        Node newNode = new Node(value);
+
+        newNode.prev = before;
+        newNode.next = after;
+        before.next = newNode;
+        after.prev = newNode;
+        size++;
     }
+
+    // Removes node n by linking its two neighbours to each other
     private int unlink(Node n) {
-        if (n.prev==null) head=n.next; else n.prev.next=n.next;
-        if (n.next==null) tail=n.prev; else n.next.prev=n.prev;
-        size--; return n.value;
+        // fix the link coming from the left
+        if (n.prev == null) {
+            head = n.next;           // n was the first node
+        } else {
+            n.prev.next = n.next;
+        }
+
+        // fix the link coming from the right
+        if (n.next == null) {
+            tail = n.prev;           // n was the last node
+        } else {
+            n.next.prev = n.prev;
+        }
+
+        size--;
+        return n.value;
     }
+
     public int deleteHead() {
-        if (isEmpty()) throw new NoSuchElementException("empty list");
+        if (isEmpty()) {
+            throw new IllegalStateException("empty list");
+        }
         return unlink(head);
     }
+
     public int deleteTail() {
-        if (isEmpty()) throw new NoSuchElementException("empty list");
-        return unlink(tail);
+        if (isEmpty()) {
+            throw new IllegalStateException("empty list");
+        }
+        return unlink(tail);   // O(1): tail.prev tells us the new last node
     }
-    public int delete(int index) { return unlink(nodeAt(index)); }
-    public int get(int index) { return nodeAt(index).value; }
+
+    public int delete(int index) {
+        return unlink(nodeAt(index));
+    }
+
+    public int get(int index) {
+        return nodeAt(index).value;
+    }
+
+    // Returns the position of the value, or -1 if it is not in the list
     public int search(int value) {
-        int i=0; for (Node p=head; p!=null; p=p.next,i++) if (p.value==value) return i;
+        Node current = head;
+        int index = 0;
+
+        while (current != null) {
+            if (current.value == value) {
+                return index;
+            }
+            current = current.next;
+            index++;
+        }
         return -1;
     }
-    public int[] traverseForward() {
-        int[] a=new int[size]; int i=0;
-        for (Node p=head; p!=null; p=p.next) a[i++]=p.value; return a;
-    }
-    public int[] traverseBackward() {
-        int[] a=new int[size]; int i=0;
-        for (Node p=tail; p!=null; p=p.prev) a[i++]=p.value; return a;
-    }
-    public void clear() { head=null; tail=null; size=0; }
-    @Override public String toString() { StringBuilder out=new StringBuilder("[");
-        int[] values=traverseForward();
-        for (int i=0; i<values.length; i++) {
-            if (i>0) out.append(", "); out.append(values[i]);
+
+    // Prints from head to tail using the next links
+    public void printForward() {
+        Node current = head;
+        while (current != null) {
+            System.out.print(current.value + " ");
+            current = current.next;
         }
-        return out.append(']').toString(); }
-    public static void main(String[] args) {
-        DoublyLinkedList list=new DoublyLinkedList();
-        list.insertHead(20); list.insertHead(10); list.insertTail(40); list.insert(2,30);
-        System.out.println("Forward: "+list);
-        System.out.print("Backward: ");
-        for (int value : list.traverseBackward()) System.out.print(value+" ");
         System.out.println();
-        System.out.println("30 at "+list.search(30));
-        System.out.println("Deleted "+list.deleteHead()+", "+list.deleteTail()+", "+list.delete(1));
+    }
+
+    // Prints from tail to head using the prev links
+    public void printBackward() {
+        Node current = tail;
+        while (current != null) {
+            System.out.print(current.value + " ");
+            current = current.prev;
+        }
+        System.out.println();
+    }
+
+    // Empties the list
+    public void clear() {
+        head = null;
+        tail = null;
+        size = 0;
+    }
+
+    // Shows the list like [10, 20, 30]
+    @Override
+    public String toString() {
+        String text = "[";
+        Node current = head;
+
+        while (current != null) {
+            text += current.value;
+            if (current.next != null) {
+                text += ", ";
+            }
+            current = current.next;
+        }
+        return text + "]";
+    }
+
+    public static void main(String[] args) {
+        DoublyLinkedList list = new DoublyLinkedList();
+
+        list.insertHead(20);     // [20]
+        list.insertHead(10);     // [10, 20]
+        list.insertTail(40);     // [10, 20, 40]
+        list.insert(2, 30);      // [10, 20, 30, 40]
+
+        System.out.print("Forward: ");
+        list.printForward();
+        System.out.print("Backward: ");
+        list.printBackward();
+        System.out.println("30 at " + list.search(30));
+
+        int a = list.deleteHead();   // removes 10
+        int b = list.deleteTail();   // removes 40
+        int c = list.delete(1);      // removes 30
+        System.out.println("Deleted " + a + ", " + b + ", " + c);
         System.out.println(list);
     }
 }

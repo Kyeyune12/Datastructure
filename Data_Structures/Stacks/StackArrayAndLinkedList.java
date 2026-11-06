@@ -1,70 +1,124 @@
-import java.util.NoSuchElementException;
-
 /**
  * javac StackArrayAndLinkedList.java && java StackArrayAndLinkedList
- * LIFO: last pushed, first popped. Both implementations reject underflow with
- * NoSuchElementException, and expose size/isEmpty/peek/push/pop/clear.
- * Array stack doubles contiguous logical storage: push amortized O(1), worst
- * O(n) on resize; pop/peek O(1), storage O(capacity). It never shrinks, avoiding
- * resize thrashing. Linked stack uses one allocation per push: O(1) operations,
- * O(n) node storage. JVM does not expose physical array addresses. Not thread-safe.
- * isFull denotes configured/representational capacity, not available heap RAM;
- * an allocation can fail earlier with OutOfMemoryError.
+ *
+ * A stack is LIFO: the LAST item pushed is the FIRST item popped
+ * (like a pile of plates - you take from the top).
+ *
+ * Two versions with the same operations:
+ *   1. ArrayStack  - items live in an array; 'top' is the index of the top item.
+ *   2. LinkedStack - items live in linked nodes; 'top' is the first node.
+ *
+ * push, pop and peek are all O(1).
  */
-public final class StackArrayAndLinkedList {
-    private StackArrayAndLinkedList() { }
-    public static final class ArrayStack {
+public class StackArrayAndLinkedList {
+
+    // ================= 1. Stack using an array =================
+
+    static class ArrayStack {
         private int[] data;
-        private int size;
-        public ArrayStack(int initialCapacity) {
-            if (initialCapacity<1) throw new IllegalArgumentException("capacity must be positive");
-            data=new int[initialCapacity];
+        private int top = -1;   // index of the top item; -1 means the stack is empty
+
+        ArrayStack(int capacity) {
+            data = new int[capacity];
         }
-        public int size() { return size; }
-        public boolean isEmpty() { return size==0; }
-        public boolean isFull() { return size==Integer.MAX_VALUE; }
-        public void push(int value) {
-            if (isFull()) throw new IllegalStateException("size limit");
-            if (size==data.length) {
-                int capacity=(int)Math.min(Integer.MAX_VALUE,2L*data.length);
-                int[] expanded=new int[capacity];
-                for (int i=0; i<size; i++) expanded[i]=data[i];
-                data=expanded;
+
+        boolean isEmpty() {
+            return top == -1;
+        }
+
+        // full when the top item is in the last slot of the array
+        boolean isFull() {
+            return top == data.length - 1;
+        }
+
+        // put a value on top
+        void push(int value) {
+            if (isFull()) {
+                throw new IllegalStateException("stack is full");
             }
-            data[size++]=value;
+            top = top + 1;
+            data[top] = value;
         }
-        public int peek() {
-            if (isEmpty()) throw new NoSuchElementException("empty stack");
-            return data[size-1];
+
+        // look at the top value without removing it
+        int peek() {
+            if (isEmpty()) {
+                throw new IllegalStateException("stack is empty");
+            }
+            return data[top];
         }
-        public int pop() { int value=peek(); data[--size]=0; return value; }
-        public void clear() { for (int i=0; i<size; i++) data[i]=0; size=0; }
+
+        // remove and return the top value
+        int pop() {
+            int value = peek();
+            top = top - 1;   // the old slot will simply be overwritten by the next push
+            return value;
+        }
     }
-    public static final class LinkedStack {
-        private static final class Node {
-            final int value; final Node next;
-            Node(int value, Node next) { this.value=value; this.next=next; }
+
+    // ================= 2. Stack using a linked list =================
+
+    static class LinkedStack {
+
+        private static class Node {
+            int value;
+            Node next;   // the node underneath this one
+
+            Node(int value, Node next) {
+                this.value = value;
+                this.next = next;
+            }
         }
-        private Node top;
-        private int size;
-        public int size() { return size; }
-        public boolean isEmpty() { return size==0; }
-        public boolean isFull() { return size==Integer.MAX_VALUE; }
-        public void push(int value) {
-            if (isFull()) throw new IllegalStateException("size limit");
-            top=new Node(value,top); size++;
+
+        private Node top;   // top of the stack; null means empty
+
+        boolean isEmpty() {
+            return top == null;
         }
-        public int peek() {
-            if (isEmpty()) throw new NoSuchElementException("empty stack");
+
+        // put a value on top: the new node points down to the old top
+        void push(int value) {
+            Node newNode = new Node(value, top);
+            top = newNode;
+        }
+
+        // look at the top value without removing it
+        int peek() {
+            if (isEmpty()) {
+                throw new IllegalStateException("stack is empty");
+            }
             return top.value;
         }
-        public int pop() { int value=peek(); top=top.next; size--; return value; }
-        public void clear() { top=null; size=0; }
+
+        // remove and return the top value: move top down one node
+        int pop() {
+            int value = peek();
+            top = top.next;
+            return value;
+        }
     }
+
     public static void main(String[] args) {
-        ArrayStack array=new ArrayStack(2); LinkedStack linked=new LinkedStack();
-        for (int n : new int[]{10,20,30}) { array.push(n); linked.push(n); }
-        System.out.println("Peek: "+array.peek()+", "+linked.peek());
-        while (!array.isEmpty()) System.out.println(array.pop()+" = "+linked.pop());
+        ArrayStack array = new ArrayStack(5);
+        LinkedStack linked = new LinkedStack();
+
+        // push 10, 20, 30 onto both stacks
+        array.push(10);
+        linked.push(10);
+
+        array.push(20);
+        linked.push(20);
+
+        array.push(30);
+        linked.push(30);
+
+        System.out.println("Peek: " + array.peek() + ", " + linked.peek());
+
+        // pop everything: comes out in reverse order (30, 20, 10)
+        while (!array.isEmpty()) {
+            int fromArray = array.pop();
+            int fromLinked = linked.pop();
+            System.out.println(fromArray + " = " + fromLinked);
+        }
     }
 }

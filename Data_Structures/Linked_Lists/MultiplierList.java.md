@@ -1,6 +1,6 @@
 # MultiplierList.java
 
-Multiplies a number stored as a **linked list of digits** by an ordinary `int` k. Because the number is never converted to an `int` or `long`, it can have any number of digits.
+Multiplies a number stored as a **linked list of digits** by an ordinary `int` k, the same way you multiply on paper.
 
 **Language:** Java · **Related:** [SinglyLinkedList](SinglyLinkedList.java.md)
 
@@ -19,35 +19,21 @@ Digits are stored **least significant digit (LSD) first**, so 495 is stored as:
 5 ──► 9 ──► 4 ──► null
 ```
 
-LSD-first is what makes the code simple: written multiplication starts from the units digit, so the loop can walk the list in its natural order while carrying to the next node.
+Storing it backwards is what makes the code simple. Written multiplication starts from the ones digit, so the loop can walk the list from the front while carrying to the next node.
 
-`ListNode`'s constructor accepts only digits 0–9. Anything else throws `IllegalArgumentException`.
+## How `multiply(head, k)` works
 
-## How `multiplyLinkedList(head, k)` works
-
-1. **Check the input.**
-   - `k` must be ≥ 0.
-   - The list must not loop back on itself. This is checked with **Floyd's tortoise-and-hare**: `slow` moves one node at a time and `fast` moves two. If the list has a cycle they eventually land on the same node; otherwise `fast` reaches `null`.
-   - Every digit must be 0–9.
-2. **Find the last non-zero digit.** Any zeros after it, such as `5 → 0 → 0`, are leading zeros of the number and can be ignored.
-3. **Zero shortcut.** If the number is 0 (an empty list or all zeros) or k is 0, return a single node `0`.
-4. **School multiplication with a carry.** For each digit:
+1. **Zero shortcut.** If the list is empty or k is 0, return a single node `0`.
+2. **Make a placeholder.** A `dummy` node sits in front of the answer, so the code can always write `tail.next = ...` without checking whether the answer list is still empty. At the end we return `dummy.next`.
+3. **School multiplication with a carry.** For each digit:
    ```java
-   long value = digit * k + carry;
-   newDigit   = value % 10;      // goes into the result list
-   carry      = value / 10;      // carried to the next digit
+   int value = current.digit * k + carry;
+   tail.next = new Node(value % 10);   // the last digit stays here
+   carry = value / 10;                 // the rest is carried on
    ```
-   `value` is a `long` because `9 * Integer.MAX_VALUE + carry` doesn't fit in an `int`.
-5. **Flush the carry.** Whatever carry is left becomes extra high-order digits, one per `% 10`.
-6. **Trim.** Leading zeros are cut off the result.
+4. **Flush the carry.** Whatever carry is left becomes extra digits at the end, one digit at a time with `% 10` and `/ 10`.
 
-The input list is never changed; a fresh list is returned.
-
-**Loop invariant:** after processing i digits,
-
-k × (the digits read so far) = (the digits written so far) + carry × 10ⁱ
-
-When the loop ends and the carry has been flushed, the result is exactly k × the number.
+The input list is never changed; a new list is returned.
 
 ## Output
 
@@ -65,16 +51,16 @@ The input is 99 (stored as `9 → 9`), and 99 × 5 = **495**, stored as `5 → 9
 
 ## Complexity
 
-- **Time:** O(n + log₁₀ k). That is one pass over the n digits, plus the extra digits produced by flushing the carry.
-- **Extra space:** O(1), not counting the result list.
+- **Time:** O(n + number of digits in k). That is one pass over the n digits, plus a few extra digits from the carry.
+- **Extra space:** O(1), not counting the new result list.
 
-## Edge cases
+## What changed (simplified version)
 
-| Input | Result |
-| --- | --- |
-| `null` list (the number 0) | `0` |
-| `0 → 0 → 0` | `0` |
-| `k = 0` | `0` |
-| `5 → 0 → 0` (the number 5, with two redundant leading zeros) times 2 | `0 → 1` (10). The zeros are dropped |
-| A list that loops back on itself | `IllegalArgumentException("cyclic input")` |
-| Negative `k` | `IllegalArgumentException` |
+| Before | Now | Why |
+| --- | --- | --- |
+| The method was called `multiplyLinkedList` and the node class `ListNode` | `multiply` and `Node` | Shorter names |
+| Checked for a list that loops back on itself (Floyd's tortoise and hare) | Removed | The demo never builds such a list |
+| Checked every digit was 0–9 and that k was not negative | Removed | Keeps the method focused on the multiplication |
+| Removed extra leading zeros from the answer (for example `5 → 0 → 0`) | Removed | Not needed for normal input |
+| Used `long` for `value` and `carry` | Uses `int` | Simpler. Fine unless k is close to `Integer.MAX_VALUE` |
+| `for` loops with several statements on one line | `while` loops with one statement per line, and comments on each step | Easier to follow |

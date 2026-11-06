@@ -15,40 +15,49 @@ java ArrayShuffle
 
 | Method | What it does |
 | --- | --- |
-| `shuffleInPlace(int[] arr)` | Shuffles using a new `Random`, so the order is different on every run |
-| `shuffleInPlace(int[] arr, Random random)` | Shuffles using the `Random` you pass in. Give it a fixed seed for repeatable results |
-| `main` | Shuffles `{1, 2, 3, 4, 5, 6}` with seed 42 and prints the result |
+| `shuffle(int[] arr)` | Shuffles the array in place using Fisher–Yates |
+| `print(int[] arr)` | Prints all the values on one line |
+| `main` | Prints `{1, 2, 3, 4, 5, 6}`, shuffles it, and prints it again |
 
 ## How Fisher–Yates works
 
 ```java
 for (int i = arr.length - 1; i > 0; i--) {
-    int j = random.nextInt(i + 1);    // uniform in [0, i]
-    swap(arr, i, j);
+    int j = (int) (Math.random() * (i + 1));   // random index from 0 to i
+
+    int temp = arr[i];                         // swap arr[i] and arr[j]
+    arr[i] = arr[j];
+    arr[j] = temp;
 }
 ```
 
-Work from the back of the array. At each step, pick one of the elements not yet placed, uniformly at random (it can be the current one), and swap it into position `i`. Position `i` is then final, and the loop moves one step left.
+Start at the back of the array. At each step, pick a random element from the part that is not placed yet (it can be the current element), and swap it into position `i`. Position `i` is then final, and the loop moves one step left.
 
-**Why every ordering is equally likely:** the last position has n equally likely choices, the next has n − 1, and so on. That gives n·(n−1)·…·1 = **n!** equally likely sequences of choices. Each sequence produces a different ordering, and there are exactly n! orderings, so each one has probability 1/n!.
+**Getting a random index:** `Math.random()` gives a decimal from 0.0 up to, but not including, 1.0. Multiplying by `(i + 1)` gives a number from 0 up to just below `i + 1`. Casting to `int` cuts off the decimal part, so `j` is a whole number from 0 to `i`.
 
-A common mistake is to pick `j` from the *whole* array every time. That produces nⁿ equally likely sequences of choices. nⁿ is not a multiple of n!, so some orderings must come up more often than others.
+**Why every ordering is equally likely:** the last position has n equally likely choices, the next has n − 1, and so on. That gives n·(n−1)·…·1 = **n!** equally likely sequences of choices. Each one produces a different ordering, and there are exactly n! orderings, so each has probability 1/n!.
 
-## Output
+A common mistake is to pick `j` from the *whole* array every time. That gives nⁿ sequences of choices. nⁿ is not a multiple of n!, so some orderings would come up more often than others.
+
+## Output (example)
 
 ```
-2 1 5 6 4 3
+Before: 1 2 3 4 5 6
+After:  3 4 6 1 2 5
 ```
 
-The seed is fixed at 42, so this output is the same on every run.
+The "After" line is **different on every run**, because `Math.random()` is not given a fixed seed.
 
 ## Complexity
 
 - **Time:** Θ(n), from exactly n − 1 swaps.
 - **Extra space:** O(1). The array is shuffled in place.
 
-## Notes
+## What changed (simplified version)
 
-- `Random.nextInt(bound)` is used instead of `random.nextInt() % bound`, because the `%` version favours small numbers (*modulo bias*).
-- `java.util.Random` is a pseudo-random generator. It is fine for games and demos, but not for anything security-related; use `SecureRandom` for that.
-- A `null` array or `null` generator throws `NullPointerException` straight away.
+| Before | Now | Why |
+| --- | --- | --- |
+| `import java.util.Random;` and `random.nextInt(i + 1)` | `(int) (Math.random() * (i + 1))` | `Math` is part of `java.lang`, so it needs no import |
+| `import java.util.Arrays;` and `Arrays.toString(values)` | A small `print` method with a `for` loop | No import, and the loop is easy to explain |
+| A fixed seed (42) gave the same result every run | The result is different every run | `Math.random()` can't be given a seed. This is also what a real shuffle should do |
+| Only the shuffled array was printed | Both "Before" and "After" are printed | You can see the shuffle happen |

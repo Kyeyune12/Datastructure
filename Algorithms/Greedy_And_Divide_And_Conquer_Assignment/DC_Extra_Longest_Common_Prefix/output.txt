@@ -1,0 +1,8 @@
+Words: interview internet interval internal interact 
+
+  combine "interview" + "internet" -> "inter"
+  combine "inter" + "interval" -> "inter"
+  combine "internal" + "interact" -> "inter"
+  combine "inter" + "inter" -> "inter"
+
+Longest common prefix: "inter"

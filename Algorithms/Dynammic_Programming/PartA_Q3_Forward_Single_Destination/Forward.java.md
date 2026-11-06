@@ -37,8 +37,8 @@ So the forward approach naturally solves **single-destination** shortest paths. 
 | Member | Purpose |
 | --- | --- |
 | `EDGES`, `N`, `INF` | The lecture graph, as in Q1 |
-| `succ` | `List<List<int[]>>`, where `succ.get(u)` lists the `{v, w}` of every edge **out of** u |
-| `fgraph(t)` | The DP loop, filling `cost[]` and `d[]` for every vertex |
+| `cost[]`, `d[]` | The DP table and the "best next step" table (both `static`) |
+| `fgraph(t)` | The DP loop, filling `cost[]` and `d[]` for every vertex. For each i it scans `EDGES` and uses only the edges that **start** at i |
 | `pathFrom(i, t)` | Follows `d[]` from i to t and returns the path as a string, e.g. `"3 -> 6 -> 10 -> 12"` |
 | `main` | Runs `fgraph(12)`, then prints one row per vertex |
 
@@ -69,6 +69,16 @@ Answer for s = 1: COST(1) = 16
 
 ## Complexity
 
-- **Time Θ(n + e):** each vertex once, and each outgoing edge once.
-- **Space:** O(n) for `cost` and `d`, plus O(n + e) for the successor lists.
+- **Time O(n · e) as written:** for each vertex, the loop scans the whole edge list for edges leaving it. Keeping a separate list of outgoing edges per vertex would make it Θ(n + e).
+- **Space:** O(n) for `cost` and `d`.
 - Printing every path costs O(n · k) for k stages.
+
+## What changed (simplified version)
+
+| Before | Now | Why |
+| --- | --- | --- |
+| `import java.util.ArrayList` and `List` | No imports | Only plain arrays are used |
+| A `succ` list of outgoing edges, built in a constructor | The loop scans `EDGES` directly and skips edges that don't start at i | No list-of-lists to explain. Costs O(n · e) instead of Θ(n + e) |
+| An object (`new Forward()`) held the tables | The tables and methods are `static` | Nothing to construct |
+| `pathFrom` used a `StringBuilder` | Plain `String` joining | Easier to read |
+| Several statements squeezed onto one line, and loops or `if`s without braces | One statement per line, braces on every loop and `if`, and comments explaining each step | Easier to read and explain |

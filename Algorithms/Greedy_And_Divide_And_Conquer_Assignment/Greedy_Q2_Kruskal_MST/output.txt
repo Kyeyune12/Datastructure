@@ -1,0 +1,10 @@
+Cables chosen for the Minimum Spanning Tree:
+  Admin - Lab  (cost 1)
+  Admin - Hostel  (cost 2)
+  Hostel - Cafeteria  (cost 2)
+  Library - Lab  (cost 3)
+  [skip] Library - Admin would make a loop
+  [skip] Lab - Hostel would make a loop
+  Cafeteria - Hall  (cost 6)
+
+Total cable cost: 14

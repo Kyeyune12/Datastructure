@@ -1,0 +1,11 @@
+Line width: 20 characters
+
+|--------------------|
+|Greedy algorithms   |
+|make the best choice|
+|at each step and    |
+|never go back to    |
+|change it           |
+|--------------------|
+
+Total lines used: 5

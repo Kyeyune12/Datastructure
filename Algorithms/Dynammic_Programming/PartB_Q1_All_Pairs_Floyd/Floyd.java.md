@@ -84,3 +84,14 @@ These match the backward and forward approaches in Part A.
 
 - If the graph has two edges between the same pair of vertices, the last `addEdge` wins. Keep the smaller weight if that matters.
 - For negative weights and negative cycles, see [NegativeWeights.java](../PartB_Q2_Negative_Weights/NegativeWeights.java.md).
+
+## What changed (simplified version)
+
+This file never had imports. The algorithm and the output are the same; only the layout changed.
+
+| Before | Now | Why |
+| --- | --- | --- |
+| The constructor set `A` and `next` with `?:` expressions on one line | An `if`/`else` that sets both values for the diagonal and for everything else | Easier to read |
+| `print` and `printPath` built their lines with `StringBuilder` | Lines are printed directly with `System.out.printf`, and the path is a plain `String` | Fewer steps |
+| `main` called several `addEdge`s and `printPath`s on one line | One call per line | Easier to follow |
+| Several statements squeezed onto one line, and loops or `if`s without braces | One statement per line, braces on every loop and `if`, and comments explaining each step | Easier to read and explain |

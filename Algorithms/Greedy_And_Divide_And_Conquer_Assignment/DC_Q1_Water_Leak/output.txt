@@ -1,0 +1,10 @@
+Searching 16 sensors for the leak...
+  Checking sensor 15 -> pressure 2
+  Checking sensor 7 -> pressure 5
+  Checking sensor 11 -> pressure 2
+  Checking sensor 9 -> pressure 5
+  Checking sensor 10 -> pressure 2
+
+First low-pressure sensor: 10
+The leak is between sensor 9 and sensor 10.
+Sensors checked: 5 (instead of up to 16)

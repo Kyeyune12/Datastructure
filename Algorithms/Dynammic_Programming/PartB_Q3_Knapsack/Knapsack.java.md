@@ -36,6 +36,7 @@ V[i][c] = V[i-1][c]                                if w_i > c   (item i doesn't 
 | --- | --- |
 | `static int[][] V` | The DP table, (n+1) × (m+1) |
 | `knapsack(n, m, w, p, take, showTable)` | Fills V, optionally prints it, works back to fill `take[]`, and returns V[n][m]. Arrays are **1-based**: `w[0]` and `p[0]` are unused |
+| `printTable(n, m)` | Prints the DP table V |
 | `bruteForce(n, m, w, p)` | Tries all 2ⁿ subsets using a bitmask. Used only as a check |
 | `solve(title, …)` | Prints the problem, runs the DP and the check, and prints the profit, the x vector and the weight used |
 | `main` | Three examples |
@@ -84,3 +85,16 @@ Example 3 is the classic case where picking items **greedily by profit/weight ra
 ## Notes
 
 - If only the best profit is needed, a single row of size m + 1 is enough, looping c from m *downwards* so each item is used at most once. The full table is kept here so the chosen items can be recovered.
+
+## What changed (simplified version)
+
+This file never had imports. The algorithm and the output are the same; only the layout changed.
+
+| Before | Now | Why |
+| --- | --- | --- |
+| The "take item i" test was squeezed into one `if` | Two clear steps: `V[i][c] = V[i - 1][c]` (skip), then compute `withItem` and keep it if it is bigger (take) | Each option is visible |
+| Printing the table was inside `knapsack` | Moved into its own `printTable` method | `knapsack` only does the DP |
+| The walk-back used `take[i] = (...) ? 1 : 0` | An `if`/`else` that sets `take[i]` and reduces `c` | Easier to read |
+| `bruteForce` used short names `tw` and `tp` | `totalWeight`, `totalProfit` and `itemInSubset` | Self-explaining names |
+| `StringBuilder`s for the item lines and the x vector | Plain `String` joining | Easier to read |
+| Several statements squeezed onto one line, and loops or `if`s without braces | One statement per line, braces on every loop and `if`, and comments explaining each step | Easier to read and explain |

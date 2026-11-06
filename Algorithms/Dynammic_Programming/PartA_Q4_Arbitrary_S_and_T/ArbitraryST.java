@@ -16,95 +16,145 @@
  *
  * Compile: javac ArbitraryST.java     Run: java ArbitraryST
  */
-import java.util.*;
-
 public class ArbitraryST {
-    static final int N = 12;
-    static final int INF = Integer.MAX_VALUE / 4;
+    static final int N = 12;                       // number of vertices
+    static final int INF = Integer.MAX_VALUE / 4;  // "infinity" (no path)
 
+    // Each edge is {from, to, cost}
     static final int[][] EDGES = {
-        {1,2,9},{1,3,7},{1,4,3},{1,5,2},
-        {2,6,4},{2,7,2},{2,8,1},
-        {3,6,2},{3,7,7},
-        {4,8,11},
-        {5,7,11},{5,8,8},
-        {6,9,6},{6,10,5},
-        {7,9,4},{7,10,3},
-        {8,10,5},{8,11,6},
-        {9,12,4},{10,12,2},{11,12,5}
+        {1, 2, 9}, {1, 3, 7}, {1, 4, 3}, {1, 5, 2},
+        {2, 6, 4}, {2, 7, 2}, {2, 8, 1},
+        {3, 6, 2}, {3, 7, 7},
+        {4, 8, 11},
+        {5, 7, 11}, {5, 8, 8},
+        {6, 9, 6}, {6, 10, 5},
+        {7, 9, 4}, {7, 10, 3},
+        {8, 10, 5}, {8, 11, 6},
+        {9, 12, 4}, {10, 12, 2}, {11, 12, 5}
     };
 
-    int[] bcost = new int[N + 1];
-    int[] d = new int[N + 1];
+    static int[] bcost = new int[N + 1];   // bcost[j] = cheapest cost from s to j
+    static int[] d = new int[N + 1];       // d[j] = vertex we came from to reach j
 
-    /** Generalised BCOST: any source s. */
-    void bcostFrom(int s) {
-        Arrays.fill(bcost, INF);
-        Arrays.fill(d, 0);
+    // The same BCOST algorithm as Q1, but for ANY source s
+    static void bcostFrom(int s) {
+        for (int j = 1; j <= N; j++) {
+            bcost[j] = INF;
+            d[j] = 0;
+        }
         bcost[s] = 0;
-        for (int j = s + 1; j <= N; j++)                // topological order
-            for (int[] e : EDGES)
-                if (e[1] == j && bcost[e[0]] != INF && bcost[e[0]] + e[2] < bcost[j]) {
-                    bcost[j] = bcost[e[0]] + e[2];
-                    d[j] = e[0];
+
+        // vertices before s can never be reached from s, so start at s + 1
+        for (int j = s + 1; j <= N; j++) {
+            for (int[] e : EDGES) {
+                int l = e[0];
+                int to = e[1];
+                int c = e[2];
+
+                if (to == j && bcost[l] != INF && bcost[l] + c < bcost[j]) {
+                    bcost[j] = bcost[l] + c;
+                    d[j] = l;
                 }
+            }
+        }
     }
 
-    /** Brute force: try every path (DFS) - used only for checking. */
+    // Brute force: try EVERY path from u to t and keep the cheapest.
+    // Slow, but obviously correct - used only to check the DP answers.
     static int brute(int u, int t) {
-        if (u == t) return 0;
+        if (u == t) {
+            return 0;
+        }
+
         int best = INF;
-        for (int[] e : EDGES)
+        for (int[] e : EDGES) {
             if (e[0] == u) {
-                int rest = brute(e[1], t);
-                if (rest != INF) best = Math.min(best, e[2] + rest);
+                int rest = brute(e[1], t);   // best cost from the next vertex
+                if (rest != INF) {
+                    best = Math.min(best, e[2] + rest);
+                }
             }
+        }
         return best;
     }
 
-    static String show(int x) { return x == INF ? "INF" : String.valueOf(x); }
+    // Shows INF as the word "INF" instead of a huge number
+    static String show(int x) {
+        if (x == INF) {
+            return "INF";
+        }
+        return "" + x;
+    }
+
+    // Walks back from t to s using d[], adding each vertex to the FRONT
+    static String path(int s, int t) {
+        if (bcost[t] == INF) {
+            return "no path";
+        }
+
+        String path = "" + t;
+        int x = t;
+        while (x != s) {
+            x = d[x];
+            path = x + " -> " + path;
+        }
+        return path;
+    }
 
     public static void main(String[] args) {
-        int[][] pairs = { {1,12}, {2,12}, {3,10}, {5,9}, {2,11},
-                          {1,7}, {4,9}, {6,6}, {10,2} };
-        ArbitraryST g = new ArbitraryST();
+        int[][] pairs = {
+            {1, 12}, {2, 12}, {3, 10}, {5, 9}, {2, 11},
+            {1, 7}, {4, 9}, {6, 6}, {10, 2}
+        };
         boolean allOk = true;
 
         System.out.println("Same algorithm, arbitrary (s, t) pairs");
         System.out.println("----------------------------------------------------------");
         System.out.println("  s ->  t | DP cost | brute | path");
         System.out.println("----------------------------------------------------------");
-        for (int[] p : pairs) {
-            int s = p[0], t = p[1];
-            g.bcostFrom(s);
-            int bf = brute(s, t);
-            String path;
-            if (g.bcost[t] == INF) path = "no path";
-            else {
-                LinkedList<Integer> list = new LinkedList<>();
-                int x = t;
-                list.addFirst(x);
-                while (x != s) { x = g.d[x]; list.addFirst(x); }
-                StringJoiner sj = new StringJoiner(" -> ");
-                for (int v : list) sj.add(String.valueOf(v));
-                path = sj.toString();
-            }
-            System.out.printf("%3d -> %2d | %7s | %5s | %s%n", s, t, show(g.bcost[t]), show(bf), path);
-            if (g.bcost[t] != bf) allOk = false;
-        }
-        System.out.println("----------------------------------------------------------");
-        System.out.println("All results match brute force: " + (allOk ? "YES" : "NO") + "\n");
 
+        for (int[] p : pairs) {
+            int s = p[0];
+            int t = p[1];
+
+            bcostFrom(s);
+            int bf = brute(s, t);
+
+            System.out.printf("%3d -> %2d | %7s | %5s | %s%n", s, t, show(bcost[t]), show(bf), path(s, t));
+
+            if (bcost[t] != bf) {
+                allOk = false;
+            }
+        }
+
+        System.out.println("----------------------------------------------------------");
+        if (allOk) {
+            System.out.println("All results match brute force: YES\n");
+        } else {
+            System.out.println("All results match brute force: NO\n");
+        }
+
+        // Distance matrix: run the algorithm once for every source s
         System.out.println("Distance matrix: row = s, column = t  (. = no path)");
-        StringBuilder head = new StringBuilder("     ");
-        for (int t = 1; t <= N; t++) head.append(String.format("%4d", t));
-        System.out.println(head);
+
+        System.out.print("     ");
+        for (int t = 1; t <= N; t++) {
+            System.out.printf("%4d", t);
+        }
+        System.out.println();
+
         for (int s = 1; s <= N; s++) {
-            g.bcostFrom(s);
-            StringBuilder row = new StringBuilder(String.format("%4d ", s));
-            for (int t = 1; t <= N; t++)
-                row.append(g.bcost[t] == INF ? "   ." : String.format("%4d", g.bcost[t]));
-            System.out.println(row);
+            bcostFrom(s);
+            System.out.printf("%4d ", s);
+
+            for (int t = 1; t <= N; t++) {
+                if (bcost[t] == INF) {
+                    System.out.print("   .");
+                } else {
+                    System.out.printf("%4d", bcost[t]);
+                }
+            }
+            System.out.println();
         }
     }
 }

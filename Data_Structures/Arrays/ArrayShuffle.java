@@ -1,27 +1,44 @@
-import java.util.Objects;
-import java.util.Random;
-
 /**
  * javac ArrayShuffle.java && java ArrayShuffle
- * Fisher-Yates: at step i choose uniformly from [0,i], swap into position i.
- * Each permutation has probability 1/n! under independent uniform choices.
- * Exactly max(n-1,0) iterations: Theta(n) time, O(1) auxiliary space.
- * Random.nextInt(bound) avoids modulo bias; a fixed seed gives repeatable demos.
- * Pseudorandom shuffling is not a cryptographic/security guarantee.
+ *
+ * Shuffles an array into a random order using the Fisher-Yates algorithm.
+ * Every possible order is equally likely, and it takes O(n) time.
  */
-public final class ArrayShuffle {
-    private ArrayShuffle() { }
-    public static void shuffleInPlace(int[] arr) { shuffleInPlace(arr, new Random()); }
-    public static void shuffleInPlace(int[] arr, Random random) {
-        Objects.requireNonNull(arr, "arr"); Objects.requireNonNull(random, "random");
-        for (int i=arr.length-1; i>0; i--) {
-            int j=random.nextInt(i+1), tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+public class ArrayShuffle {
+
+    // Fisher-Yates shuffle:
+    // go from the last element down to the second one,
+    // and swap each element with a random element at or before it
+    static void shuffle(int[] arr) {
+        for (int i = arr.length - 1; i > 0; i--) {
+            // pick a random index from 0 to i
+            // Math.random() gives a decimal from 0.0 up to (but not including) 1.0
+            int j = (int) (Math.random() * (i + 1));
+
+            // swap arr[i] and arr[j]
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
         }
     }
-    public static void main(String[] args) {
-        int[] values={1,2,3,4,5,6};
-        shuffleInPlace(values, new Random(42));
-        for (int value : values) System.out.print(value+" ");
+
+    // Prints all the values on one line
+    static void print(int[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            System.out.print(arr[i] + " ");
+        }
         System.out.println();
+    }
+
+    public static void main(String[] args) {
+        int[] values = {1, 2, 3, 4, 5, 6};
+
+        System.out.print("Before: ");
+        print(values);
+
+        shuffle(values);
+
+        System.out.print("After:  ");
+        print(values);
     }
 }

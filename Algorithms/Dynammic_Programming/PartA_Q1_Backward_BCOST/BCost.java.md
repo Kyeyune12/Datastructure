@@ -33,23 +33,45 @@ The vertices are numbered stage by stage (1 | 2–5 | 6–8 | 9–11 | 12), so *
 | --- | --- |
 | `N = 12`, `INF = Integer.MAX_VALUE / 4` | The number of vertices and "infinity". INF is a quarter of the largest `int`, so `INF + weight` can't overflow |
 | `EDGES` | The 21 edges of the lecture graph, as `{u, v, w}` triples |
-| `pred` | `List<List<int[]>>`, where `pred.get(v)` lists the `{u, w}` of every edge **into** v. It is built once, in the constructor |
-| `bcost[]`, `d[]` | The DP table and the decision table |
-| `bgraph(s, t)` | Fills `bcost`/`d` for every vertex, then follows `d[]` back from t and reverses the result to give the path |
-| `main` | Runs `bgraph(1, 12)` and prints the table, the distance and the path |
+| `bcost[]`, `d[]` | The DP table and the decision table (both `static`) |
+| `bgraph(s)` | Fills `bcost`/`d` for every vertex |
+| `path(j)` | Rebuilds the path to j **recursively**: the path to `d[j]`, followed by `" -> j"`. It stops at the start vertex, whose `d` is 0 |
+| `main` | Runs `bgraph(1)` and prints the table, the distance and the path |
 
 The core loop:
 
 ```java
-for (int j = s + 1; j <= N; j++)                 // stage order
-    for (int[] e : pred.get(j)) {                // each incoming edge, once
-        int l = e[0], c = e[1];
+for (int j = s + 1; j <= N; j++) {          // stage order
+    for (int[] e : EDGES) {
+        int l = e[0];
+        int to = e[1];
+        int c = e[2];
+
+        if (to != j) {
+            continue;   // we only want edges that END at j
+        }
+
+        // is "go to l, then take edge l -> j" cheaper than what we have?
         if (bcost[l] != INF && bcost[l] + c < bcost[j]) {
             bcost[j] = bcost[l] + c;
             d[j] = l;
         }
     }
+}
 ```
+
+And the path, built recursively:
+
+```java
+static String path(int j) {
+    if (d[j] == 0) {
+        return "" + j;   // j is the start vertex
+    }
+    return path(d[j]) + " -> " + j;
+}
+```
+
+For example, `path(12)` = `path(10) + " -> 12"` = `path(6) + " -> 10 -> 12"` = … = `"1 -> 3 -> 6 -> 10 -> 12"`.
 
 ## Output
 
@@ -79,11 +101,22 @@ Path: 1 -> 3 -> 6 -> 10 -> 12
 
 ## Complexity
 
-- **Time Θ(n + e):** each vertex is visited once, and each edge is examined once through the predecessor lists.
-- **Space:** O(n) for `bcost` and `d`, plus O(n + e) for the predecessor lists.
+- **Time O(n · e) as written:** for each vertex j, the loop scans the whole edge list looking for edges that end at j. With 12 vertices and 21 edges this is tiny. Keeping a separate list of incoming edges for each vertex would bring it down to Θ(n + e), at the cost of more code.
+- **Space:** O(n) for `bcost` and `d`.
 - Rebuilding the path takes O(k) for k stages.
 
 ## Notes
 
 - `d[x] == 0` means "no predecessor". This is safe because vertex numbers start at 1.
-- The path loop stops at s, or when `d[x] == 0`, so an unreachable t can't make it loop forever.
+- `path(j)` stops when `d[j] == 0`, so it always ends.
+
+## What changed (simplified version)
+
+| Before | Now | Why |
+| --- | --- | --- |
+| `import java.util.ArrayList`, `Collections` and `List` | No imports | Only plain arrays are used |
+| A `pred` list of incoming edges, built in a constructor | The loop scans `EDGES` directly and skips edges that don't end at j | No list-of-lists to explain. Costs O(n · e) instead of Θ(n + e), which makes no difference on this graph |
+| `bgraph(s, t)` built the path into a `List`, then called `Collections.reverse` | `bgraph(s)` fills the tables, and a short recursive `path(j)` builds the path string | Recursion produces the path in the right order with no reversing |
+| An object (`new BCost()`) held the tables | The tables and methods are `static` | Nothing to construct |
+| `StringBuilder` to join the path | Plain `String` joining | Easier to read |
+| Several statements squeezed onto one line, and loops or `if`s without braces | One statement per line, braces on every loop and `if`, and comments explaining each step | Easier to read and explain |

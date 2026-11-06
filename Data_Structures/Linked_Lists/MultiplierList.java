@@ -1,60 +1,75 @@
 /**
  * javac MultiplierList.java && java MultiplierList
- * School multiplication, base 10, LSD first. Returns a fresh canonical list;
- * inputs are not changed. Null means zero; zero returns one node containing 0.
- * Negative k, cyclic lists and digits outside 0..9 are rejected. Redundant most
- * significant zeros are accepted and removed from output. long intermediates
- * safely hold 9*Integer.MAX_VALUE + carry. No conversion of the entire number
- * into an int/long, so the number of input digits is not machine-word limited.
- * After i digits: k*processedInput = processedOutput + carry*10^i.
- * Time O(n+log10(k+1)), auxiliary O(1) excluding new output nodes.
+ *
+ * Multiplies a number stored in a linked list by a whole number k.
+ *
+ * The digits are stored BACKWARDS (least significant digit first):
+ *   99  is stored as  9 -> 9
+ *   495 is stored as  5 -> 9 -> 4
+ *
+ * Storing it backwards lets us work like school multiplication:
+ * start with the ones digit, multiply, write down one digit, carry the rest.
  */
-public final class MultiplierList {
-    private MultiplierList() { }
-    public static final class ListNode {
-        public final int digit;
-        public ListNode next;
-        public ListNode(int digit) {
-            if (digit<0 || digit>9) throw new IllegalArgumentException("digit must be 0..9");
-            this.digit=digit;
+public class MultiplierList {
+
+    // One digit of the number
+    static class Node {
+        int digit;
+        Node next;
+
+        Node(int digit) {
+            this.digit = digit;
         }
     }
-    public static ListNode multiplyLinkedList(ListNode head, int k) {
-        if (k<0) throw new IllegalArgumentException("multiplier must be non-negative");
-        ListNode slow=head,fast=head;
-        while (fast!=null && fast.next!=null) {
-            slow=slow.next; fast=fast.next.next;
-            if (slow==fast) throw new IllegalArgumentException("cyclic input");
+
+    // Returns a NEW list holding (number in head) * k
+    static Node multiply(Node head, int k) {
+        // anything times 0 is 0
+        if (head == null || k == 0) {
+            return new Node(0);
         }
-        ListNode lastSignificant=null;
-        for (ListNode p=head; p!=null; p=p.next) {
-            if (p.digit<0 || p.digit>9) throw new IllegalArgumentException("invalid digit");
-            if (p.digit!=0) lastSignificant=p;
+
+        // 'dummy' is a placeholder in front of the answer,
+        // so we never have to check "is the answer list still empty?"
+        Node dummy = new Node(0);
+        Node tail = dummy;
+        int carry = 0;
+
+        // multiply every digit and pass the carry on to the next digit
+        Node current = head;
+        while (current != null) {
+            int value = current.digit * k + carry;
+
+            tail.next = new Node(value % 10);   // the last digit stays here
+            tail = tail.next;
+            carry = value / 10;                 // the rest is carried on
+
+            current = current.next;
         }
-        if (lastSignificant==null || k==0) return new ListNode(0);
-        ListNode dummy=new ListNode(0),tail=dummy,lastNonZero=null;
-        long carry=0;
-        for (ListNode p=head; p!=null; p=p.next) {
-            long value=(long)p.digit*k+carry;
-            tail.next=new ListNode((int)(value%10)); tail=tail.next;
-            if (tail.digit!=0) lastNonZero=tail;
-            carry=value/10;
-            if (p==lastSignificant) break; // Do not allocate redundant high-order zeros.
+
+        // whatever carry is left becomes new digits at the end
+        while (carry > 0) {
+            tail.next = new Node(carry % 10);
+            tail = tail.next;
+            carry = carry / 10;
         }
-        while (carry>0) {
-            tail.next=new ListNode((int)(carry%10)); tail=tail.next;
-            if (tail.digit!=0) lastNonZero=tail;
-            carry/=10;
-        }
-        if (lastNonZero==null) { dummy.next.next=null; return dummy.next; }
-        lastNonZero.next=null;
-        return dummy.next;
+
+        return dummy.next;   // skip the placeholder
     }
+
     public static void main(String[] args) {
-        ListNode head=new ListNode(9); head.next=new ListNode(9);
-        ListNode result=multiplyLinkedList(head,5);
+        // build 99 (stored as 9 -> 9)
+        Node head = new Node(9);
+        head.next = new Node(9);
+
+        Node result = multiply(head, 5);   // 99 * 5 = 495, stored as 5 -> 9 -> 4
+
         System.out.print("99 * 5, LSD first: ");
-        for (ListNode p=result; p!=null; p=p.next) System.out.print(p.digit+" -> ");
+        Node current = result;
+        while (current != null) {
+            System.out.print(current.digit + " -> ");
+            current = current.next;
+        }
         System.out.println("null");
     }
 }

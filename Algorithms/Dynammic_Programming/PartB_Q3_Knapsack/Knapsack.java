@@ -17,75 +17,145 @@
  */
 public class Knapsack {
 
-    static int[][] V;
+    static int[][] V;   // the DP table
 
-    /** w[] and p[] are 1-based (index 0 unused). Fills take[]. */
+    // w[] and p[] are 1-based (index 0 unused). Fills take[] with 1 = taken, 0 = not taken.
     static int knapsack(int n, int m, int[] w, int[] p, int[] take, boolean showTable) {
-        V = new int[n + 1][m + 1];
-        for (int i = 1; i <= n; i++)
+        V = new int[n + 1][m + 1];   // row 0 is all zeros: no items = no profit
+
+        // fill the table one item at a time
+        for (int i = 1; i <= n; i++) {
             for (int c = 0; c <= m; c++) {
-                V[i][c] = V[i - 1][c];                               // skip item i
-                if (w[i] <= c && p[i] + V[i - 1][c - w[i]] > V[i][c])
-                    V[i][c] = p[i] + V[i - 1][c - w[i]];             // take item i
+                // option 1: skip item i
+                V[i][c] = V[i - 1][c];
+
+                // option 2: take item i (only if it fits and gives more profit)
+                if (w[i] <= c) {
+                    int withItem = p[i] + V[i - 1][c - w[i]];
+                    if (withItem > V[i][c]) {
+                        V[i][c] = withItem;
+                    }
+                }
             }
+        }
 
         if (showTable) {
-            StringBuilder sb = new StringBuilder("DP table V[i][c]:\n  i\\c ");
-            for (int c = 0; c <= m; c++) sb.append(String.format("%4d", c));
-            System.out.println(sb);
-            for (int i = 0; i <= n; i++) {
-                sb = new StringBuilder(String.format("  %3d ", i));
-                for (int c = 0; c <= m; c++) sb.append(String.format("%4d", V[i][c]));
-                System.out.println(sb);
+            printTable(n, m);
+        }
+
+        // walk back from V[n][m] to find which items were taken
+        int c = m;
+        for (int i = n; i >= 1; i--) {
+            if (V[i][c] != V[i - 1][c]) {
+                take[i] = 1;     // value changed, so item i was used
+                c = c - w[i];    // remove its weight and keep going
+            } else {
+                take[i] = 0;
             }
         }
 
-        for (int i = n, c = m; i >= 1; i--) {
-            take[i] = (V[i][c] != V[i - 1][c]) ? 1 : 0;
-            if (take[i] == 1) c -= w[i];
-        }
         return V[n][m];
     }
 
+    // Prints the DP table V
+    static void printTable(int n, int m) {
+        System.out.println("DP table V[i][c]:");
+
+        System.out.print("  i\\c ");
+        for (int c = 0; c <= m; c++) {
+            System.out.printf("%4d", c);
+        }
+        System.out.println();
+
+        for (int i = 0; i <= n; i++) {
+            System.out.printf("  %3d ", i);
+            for (int c = 0; c <= m; c++) {
+                System.out.printf("%4d", V[i][c]);
+            }
+            System.out.println();
+        }
+    }
+
+    // Tries every subset of items. Each bit of 'mask' says if an item is in the subset.
     static int bruteForce(int n, int m, int[] w, int[] p) {
         int best = 0;
+
         for (int mask = 0; mask < (1 << n); mask++) {
-            int tw = 0, tp = 0;
-            for (int i = 0; i < n; i++)
-                if ((mask & (1 << i)) != 0) { tw += w[i + 1]; tp += p[i + 1]; }
-            if (tw <= m && tp > best) best = tp;
+            int totalWeight = 0;
+            int totalProfit = 0;
+
+            for (int i = 0; i < n; i++) {
+                boolean itemInSubset = (mask & (1 << i)) != 0;
+                if (itemInSubset) {
+                    totalWeight += w[i + 1];
+                    totalProfit += p[i + 1];
+                }
+            }
+
+            if (totalWeight <= m && totalProfit > best) {
+                best = totalProfit;
+            }
         }
         return best;
     }
 
+    // Runs one example and prints everything about it
     static void solve(String title, int n, int m, int[] w, int[] p, boolean showTable) {
         System.out.println("===== " + title + " =====");
-        StringBuilder items = new StringBuilder("  item: "), ws = new StringBuilder("  w   : "), ps = new StringBuilder("  p   : ");
+
+        // print the items
+        String items = "  item: ";
+        String weights = "  w   : ";
+        String profits = "  p   : ";
         for (int i = 1; i <= n; i++) {
-            items.append(String.format("%4d", i));
-            ws.append(String.format("%4d", w[i]));
-            ps.append(String.format("%4d", p[i]));
+            items += String.format("%4d", i);
+            weights += String.format("%4d", w[i]);
+            profits += String.format("%4d", p[i]);
         }
-        System.out.println("Capacity m = " + m + "\n" + items + "\n" + ws + "\n" + ps + "\n");
+        System.out.println("Capacity m = " + m);
+        System.out.println(items);
+        System.out.println(weights);
+        System.out.println(profits);
+        System.out.println();
 
         int[] take = new int[n + 1];
         int best = knapsack(n, m, w, p, take, showTable);
-        int tw = 0;
-        StringBuilder x = new StringBuilder("(");
+
+        // build "(x1, x2, ...)" and add up the weight used
+        int usedWeight = 0;
+        String x = "(";
         for (int i = 1; i <= n; i++) {
-            x.append(take[i]).append(i < n ? ", " : ")");
-            if (take[i] == 1) tw += w[i];
+            x += take[i];
+            if (i < n) {
+                x += ", ";
+            } else {
+                x += ")";
+            }
+            if (take[i] == 1) {
+                usedWeight += w[i];
+            }
         }
+
         int bf = bruteForce(n, m, w, p);
+
         System.out.println("\nMaximum profit = " + best);
         System.out.println("Items taken (x_i): " + x);
-        System.out.println("Total weight used = " + tw + " of " + m);
+        System.out.println("Total weight used = " + usedWeight + " of " + m);
         System.out.println("Brute-force check = " + bf + " -> " + (bf == best ? "OK" : "MISMATCH") + "\n");
     }
 
     public static void main(String[] args) {
-        solve("Example 1 (n = 3, m = 6)", 3, 6, new int[]{0, 2, 3, 4}, new int[]{0, 1, 2, 5}, true);
-        solve("Example 2 (n = 4, m = 8)", 4, 8, new int[]{0, 2, 3, 4, 5}, new int[]{0, 1, 2, 5, 6}, true);
-        solve("Example 3 (n = 3, m = 50)", 3, 50, new int[]{0, 10, 20, 30}, new int[]{0, 60, 100, 120}, false);
+        // index 0 of each array is unused, so item 1 is at index 1
+        solve("Example 1 (n = 3, m = 6)", 3, 6,
+              new int[]{0, 2, 3, 4},
+              new int[]{0, 1, 2, 5}, true);
+
+        solve("Example 2 (n = 4, m = 8)", 4, 8,
+              new int[]{0, 2, 3, 4, 5},
+              new int[]{0, 1, 2, 5, 6}, true);
+
+        solve("Example 3 (n = 3, m = 50)", 3, 50,
+              new int[]{0, 10, 20, 30},
+              new int[]{0, 60, 100, 120}, false);
     }
 }
