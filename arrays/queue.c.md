@@ -1,72 +1,50 @@
 # queue.c
 
-A **placeholder** for a queue. The file contains only an `#include`, a `#define` and a commented-out struct. There is no queue code yet.
+A **queue** (FIFO: First In, First Out) stored in a fixed-size **circular array**, written in the same style as the stack in [adts.c](adts.c.md). This used to be an empty placeholder; it now completes the pair of ADTs in this folder.
 
-**Language:** C · **Status:** unfinished · **Finished queue implementation:** [QueueArrayAndLinkedList.java](../Data_Structures/Queues/QueueArrayAndLinkedList.java.md)
+**Java version:** [QueueArrayAndLinkedList.java](../Data_Structures/Queues/QueueArrayAndLinkedList.java.md) · **Full menu program:** [circular_queue-array.c](../Data_Structures/Queues/Warehouse_Conveyor_Dispatch/circular_queue-array.c.md)
 
-## What is in the file
+## How to run
 
-```c
-#include <stdio.h>
-
-#define SIZE = 5
-
-//struct Point{
-//int x = 8;
-// int y = 5;
-//};
+```sh
+gcc queue.c -o queue
+./queue
 ```
 
-## Problems to fix
-
-| Line | Problem | Fix |
-| --- | --- | --- |
-| `#define SIZE = 5` | `#define` is plain text substitution, so `SIZE` would become `= 5`. As soon as `SIZE` is used (e.g. `int q[SIZE];` becomes `int q[= 5];`) it is a syntax error | `#define SIZE 5`, with no `=` |
-| `struct Point { int x = 8; … }` (commented out) | C doesn't allow default values inside a struct definition | Declare `int x; int y;`, then initialise when creating it: `struct Point p = {8, 5};` |
-
-## A circular array queue to complete the file
-
-This matches the design of the Java `CircularArrayQueue`:
+## How the queue is stored
 
 ```c
-#include <stdio.h>
-#include <stdbool.h>
-
 #define SIZE 5
 
 struct Queue {
-    int data[SIZE];
-    int head;       /* index of the oldest item        */
-    int size;       /* number of items currently held  */
+    int arr[SIZE];
+    int front;   // index of the next value to leave
+    int rear;    // index of the last value that joined
+    int count;   // how many values are in the queue
 };
-
-void initQueue(struct Queue *q) { q->head = 0; q->size = 0; }
-bool isEmpty(const struct Queue *q) { return q->size == 0; }
-bool isFull(const struct Queue *q)  { return q->size == SIZE; }
-
-bool enqueue(struct Queue *q, int value) {
-    if (isFull(q)) return false;
-    q->data[(q->head + q->size) % SIZE] = value;   /* wraps around */
-    q->size++;
-    return true;
-}
-
-bool dequeue(struct Queue *q, int *out) {
-    if (isEmpty(q)) return false;
-    *out = q->data[q->head];
-    q->head = (q->head + 1) % SIZE;
-    q->size--;
-    return true;
-}
-
-int main(void) {
-    struct Queue q; initQueue(&q);
-    for (int v = 10; v <= 30; v += 10) enqueue(&q, v);
-    int x;
-    while (dequeue(&q, &x)) printf("%d ", x);      /* 10 20 30 */
-    printf("\n");
-    return 0;
-}
 ```
 
-Every operation is O(1). Keeping `size` is what tells "empty" from "full".
+| Function | What it does |
+| --- | --- |
+| `enqueue(q, value)` | If full, prints `Queue overflow!`. Otherwise `rear = (rear + 1) % SIZE`, store, `count++` |
+| `dequeue(q)` | If empty, prints `Queue underflow!` and returns -1. Otherwise read `arr[front]`, `front = (front + 1) % SIZE`, `count--` |
+| `peekQueue(q)` | The front value, or -1 if empty |
+| `isQueueEmpty(q)` / `isQueueFull(q)` | `count == 0` / `count == SIZE` |
+
+`% SIZE` sends an index back to 0 after the last slot, so the array is used in a circle and nothing is ever shifted.
+
+## Output
+
+```
+***Welcome to the Queue ADT***
+front item (Peek): 12
+Dequeued: 12
+front item (Peek): 10
+```
+
+Compare with adts.c: the same three values went in, but the queue gives back **12** (the first in) where the stack gave back **13** (the last in).
+
+## Questions you may be asked
+
+- **Why start `rear` at -1?** The first `enqueue` does `rear = (-1 + 1) % 5 = 0`, so the first value lands in slot 0.
+- **Why keep `count`?** It makes full and empty easy to tell apart, because `front` and `rear` alone can look the same in both cases.

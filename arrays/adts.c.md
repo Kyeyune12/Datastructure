@@ -1,13 +1,13 @@
 # adts.c
 
-A **fixed-size stack** stored in an array, the first abstract data type (ADT) in this folder. It provides `push`, `pop`, `peek` and an "is empty" check, plus a short demo.
+A **fixed-size stack** stored in an array: the team's first abstract data type (ADT), written in plain C. It has `push`, `pop`, `peekStack` and `isStackEmpty`, plus a short demo. This file sets the **house style** that the other C files in this repo follow.
 
-**Language:** C · **Linked-list stack in this folder:** [trial.c](trial.c.md) · **Fuller Java version:** [StackArrayAndLinkedList.java](../Data_Structures/Stacks/StackArrayAndLinkedList.java.md)
+**Queue in the same style:** [queue.c](queue.c.md) · **Linked-list stack:** [mountTracker.c](../Data_Structures/Stacks/Search_and_Rescue_Backtrack/mountTracker.c.md) · **Java version:** [StackArrayAndLinkedList.java](../Data_Structures/Stacks/StackArrayAndLinkedList.java.md)
 
 ## How to run
 
 ```sh
-gcc -o adts adts.c
+gcc adts.c -o adts
 ./adts
 ```
 
@@ -15,28 +15,21 @@ gcc -o adts adts.c
 
 ```c
 #define MAX 5
+
 struct Stack {
     int arr[MAX];
-    int top;        /* index of the top item; -1 means empty */
+    int top;      // index of the top item, -1 = empty
 };
 ```
 
-```
-arr:  [12][10][13][  ][  ]
-                ▲
-               top = 2
-```
+| Function | What it does |
+| --- | --- |
+| `push(s, value)` | If `top == MAX - 1`, prints `Stack overflow!`. Otherwise `s->arr[++(s->top)] = value` (move `top` up, then store) |
+| `pop(s)` | If `top == -1`, prints `Stack underflow!` and returns -1. Otherwise returns `s->arr[(s->top)--]` (read, then move `top` down) |
+| `peekStack(s)` | The top value without removing it, or -1 if empty |
+| `isStackEmpty(s)` | `top == -1` |
 
-## Operations
-
-| Function | What it does | Time |
-| --- | --- | --- |
-| `push(&s, v)` | If `top == MAX - 1`, prints "Stack overflow!" and does nothing. Otherwise stores `v` at `arr[++top]` | O(1) |
-| `pop(&s)` | If empty, prints "Stack underflow!" and returns −1. Otherwise returns `arr[top--]` | O(1) |
-| `peekStack(&s)` | Returns the top item without removing it, or −1 if the stack is empty | O(1) |
-| `isStackEmpty(&s)` | `top == -1` | O(1) |
-
-The stack is passed **by pointer** (`struct Stack *s`), so the functions change the caller's stack and not a copy of it.
+Every function takes `struct Stack* s` (a pointer) so it changes the caller's stack, not a copy. `s->top` means "the `top` field of the struct that `s` points to".
 
 ## Output
 
@@ -48,13 +41,15 @@ Popped: 13
 top item (Peek): 10
 ```
 
-The demo pushes 12, 10 and 13. Peek shows 13 (last in), pop removes 13 (first out), and peek then shows 10.
+## The house style (what to copy when you write new C code)
 
-## Problems to fix
+- `#define` for sizes, and `struct Name { ... };` without `typedef`.
+- Functions that take `struct Name* s` and use `s->field`.
+- Error cases print a short message (`Stack overflow!`) and return -1 instead of crashing.
+- `int main()` sets up the struct, runs a few calls and `return 0;`.
 
-| Problem | Fix |
-| --- | --- |
-| `void main()` isn't standard C (gcc `-Wall` warns that `main` should return `int`) | `int main(void) { … return 0; }` |
-| `pop` and `peekStack` return −1 for "empty", but −1 could also be a real value on the stack | Return a `bool` success flag and pass the value back through a pointer, e.g. `bool pop(struct Stack *s, int *out)` |
-| The capacity is fixed at 5 | Fine for a demo. Use `malloc`/`realloc` or a linked list for a stack that can grow |
-| `s.top = -1` must be set by hand before use | Add an `initStack(struct Stack *s)` function |
+## Questions you may be asked
+
+- **What is the difference between `++(s->top)` and `(s->top)++`?** Prefix (`++x`) changes `x` first and then uses it; postfix (`x++`) uses the old value and then changes it. Push needs "move up, then store"; pop needs "read, then move down".
+- **Why -1 for an empty stack?** Index 0 is a real slot, so "nothing here" needs a value that is not a valid index.
+- **What is an ADT?** A type defined by *what it does* (push, pop, peek) rather than *how it is stored*. The same stack ADT is also built with a linked list in mountTracker.c.

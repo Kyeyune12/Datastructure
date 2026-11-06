@@ -1,7 +1,5 @@
-/**
- * javac QueueArrayAndLinkedList.java && java QueueArrayAndLinkedList
- *
- * A queue is FIFO: the FIRST item added is the FIRST item removed
+/*
+ * Queue (FIFO): the FIRST item added is the FIRST item removed
  * (like people in a line at the bank).
  *
  * Two versions with the same operations:
@@ -11,76 +9,80 @@
  *      remove from the head.
  *
  * enqueue, dequeue and peek are all O(1).
+ *
+ * Run: javac QueueArrayAndLinkedList.java && java QueueArrayAndLinkedList
  */
 public class QueueArrayAndLinkedList {
 
     // ================= 1. Queue using a circular array =================
 
     static class CircularArrayQueue {
-        private int[] data;
-        private int front;   // index of the oldest item (the next one to leave)
-        private int size;    // how many items are in the queue
+        int[] data;
+        int front = 0;   // index of the oldest item (the next one to leave)
+        int rear = -1;   // index of the newest item
+        int count = 0;   // how many items are in the queue
 
         CircularArrayQueue(int capacity) {
             data = new int[capacity];
         }
 
         boolean isEmpty() {
-            return size == 0;
+            return count == 0;
         }
 
         boolean isFull() {
-            return size == data.length;
+            return count == data.length;
         }
 
         // add a value at the back
         void enqueue(int value) {
             if (isFull()) {
-                throw new IllegalStateException("full queue");
+                System.out.println("Queue is full!");
+                return;
             }
-            // the back of the queue is 'size' steps after the front;
-            // % data.length wraps it back to 0 when it passes the end
-            int rear = (front + size) % data.length;
+            rear = (rear + 1) % data.length;   // move rear forward, wrapping to 0 at the end
             data[rear] = value;
-            size++;
+            count++;
         }
 
-        // look at the front value without removing it
+        // look at the front value without removing it (-1 if empty)
         int peek() {
             if (isEmpty()) {
-                throw new IllegalStateException("empty queue");
+                return -1;
             }
             return data[front];
         }
 
-        // remove and return the front value
+        // remove and return the front value (-1 if empty)
         int dequeue() {
-            int value = peek();
-            front = (front + 1) % data.length;   // move front forward, wrapping around
-            size--;
+            if (isEmpty()) {
+                System.out.println("Queue is empty!");
+                return -1;
+            }
+            int value = data[front];
+            front = (front + 1) % data.length;   // move front forward, wrapping to 0 at the end
+            count--;
             return value;
         }
     }
 
     // ================= 2. Queue using a linked list =================
 
-    static class LinkedQueue {
+    static class Node {
+        int value;
+        Node next;
 
-        private static class Node {
-            int value;
-            Node next;
-
-            Node(int value) {
-                this.value = value;
-            }
+        Node(int value) {
+            this.value = value;
         }
+    }
 
-        private Node head;   // front of the queue: items leave from here
-        private Node tail;   // back of the queue: items join here
-        private int size;
+    static class LinkedQueue {
+        Node head;   // front of the queue: items leave from here
+        Node tail;   // back of the queue: items join here
 
         boolean isEmpty() {
-            return size == 0;
+            return head == null;
         }
 
         // add a value at the back
@@ -93,31 +95,34 @@ public class QueueArrayAndLinkedList {
                 tail.next = newNode;   // old back node points to the new one
             }
             tail = newNode;
-            size++;
         }
 
-        // look at the front value without removing it
+        // look at the front value without removing it (-1 if empty)
         int peek() {
             if (isEmpty()) {
-                throw new IllegalStateException("empty queue");
+                return -1;
             }
             return head.value;
         }
 
-        // remove and return the front value
+        // remove and return the front value (-1 if empty)
         int dequeue() {
-            int value = peek();
+            if (isEmpty()) {
+                System.out.println("Queue is empty!");
+                return -1;
+            }
+            int value = head.value;
             head = head.next;
 
             if (head == null) {
                 tail = null;           // queue is now empty
             }
-            size--;
             return value;
         }
     }
 
     public static void main(String[] args) {
+        System.out.println("*** Queue: circular array vs linked list ***");
         CircularArrayQueue a = new CircularArrayQueue(3);
         LinkedQueue b = new LinkedQueue();
 

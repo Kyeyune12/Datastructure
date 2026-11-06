@@ -1,66 +1,60 @@
 # forward.c
 
-**Part A, Question 3, in C.** The **forward approach** (*FGraph*): one pass computes COST(i), the shortest distance from every vertex i to the target t, and the program prints each vertex's path to t. Its output is identical to [Forward.java](Forward.java.md).
+**Part A, Question 3, in C.** The **forward approach** (FGraph): the shortest path from **every** vertex to one destination t. Same algorithm and same output as [Forward.java](Forward.java.md).
 
-**Language:** C · **Java version:** [Forward.java](Forward.java.md) · **Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
+**Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
 
 ## How to run
 
 ```sh
-gcc -O2 -o forward forward.c
+gcc forward.c -o forward
 ./forward
 ```
 
-## The recurrence
+## The rule
 
 ```
 COST(t) = 0
 COST(i) = min over every edge <i, r> of { c(i, r) + COST(r) }
-D(i)    = the r that gave the minimum      (the best next step)
+D(i)    = the r that gave the minimum   (the best next hop from i)
 ```
 
-The loop runs i = t−1 down to 1. Every edge goes from a smaller number to a larger one, so COST(r) is ready whenever COST(i) needs it.
+Vertices are processed from i = t - 1 down to 1 (reverse stage order), so COST(r) is always ready. When the loop ends, COST(i) is the shortest distance from **every** vertex i to t, not just from the source.
 
-## How the code is organised
+## What is inside
 
 | Part | Purpose |
 | --- | --- |
-| `Edge edges[]`, `E`, `N 12`, `INF 1000000000` | The lecture graph and "infinity" |
-| `succ[N+1][N+1]`, `succCount[]` | `succ[u][k]` is the position in `edges[]` of the k-th edge **out of** u. They are filled at the top of `main` |
-| `fgraph(t, cost, d)` | The DP. Fills `cost[]` and `d[]` for every vertex |
-| `main` | Builds `succ`, runs `fgraph(12, …)`, then prints a row per vertex, following `d[]` inline to print each path |
+| `cost[]`, `d[]` | Cheapest cost from i to t, and the best next vertex after i |
+| `fgraph(t)` | The DP: fills `cost[]` and `d[]` |
+| `main` | Prints a row per vertex: COST(i), D(i), and the path found by following `d[]` forward until t |
 
-```c
-for (int i = t - 1; i >= 1; i--)                    /* reverse stage order */
-    for (int k = 0; k < succCount[i]; k++) {
-        Edge e = edges[succ[i][k]];
-        if (cost[e.v] != INF && e.w + cost[e.v] < cost[i]) {
-            cost[i] = e.w + cost[e.v];
-            d[i] = e.v;
-        }
-    }
-```
-
-## Output
+## Output (first rows)
 
 ```
   i | COST(i) | D(i) | shortest path i -> t
   1 |      16 |    2 | 1 -> 2 -> 7 -> 10 -> 12
   2 |       7 |    7 | 2 -> 7 -> 10 -> 12
-  3 |       9 |    6 | 3 -> 6 -> 10 -> 12
-  ...
- 12 |       0 |    - | 12
-Answer for s = 1: COST(1) = 16
 ```
 
-The full table is in [output.txt](output.txt). From vertex 1 there is a tie (through 2 or through 3, both 16). The edge to 2 is examined first, so the program prints 1 → 2 → 7 → 10 → 12. That differs from Q1's 1 → 3 → 6 → 10 → 12, and both are shortest paths.
+The full table is in [output.txt](output.txt).
 
 ## Complexity
 
-- **Time Θ(n + e)**, using the successor lists.
-- **Space O(n)** for `cost` and `d`, plus the fixed `succ` table.
+- **Time O(n · e) as written:** the loop scans the whole edge list for each vertex. With a list of outgoing edges per vertex it is Θ(n + e).
+- **Space O(n).**
 
-## C-specific notes
+## How the C file is written
 
-- `succ` is sized `[N+1][N+1]`, so a vertex can have at most N outgoing edges. That is enough for a simple graph (no repeated edges).
-- `d[i] == 0` means "no next step", which is why the loop that prints a path stops at t or at 0.
+Same team style as every C file in this repo:
+
+- `#define` for sizes (`N`, `E`, `INF`) and `struct Edge { int from; int to; int cost; }` for one edge.
+- The graph is one global array `edges[]`; the result tables are global arrays, indexed from 1 so they match the lecture (index 0 is unused).
+- Every `if` and loop has braces, with one statement per line, so each step can be pointed at during the presentation.
+- `INF` is 1,000,000. That is far bigger than any real path cost here, and `INF + cost` still fits in an `int`.
+
+## Questions you may be asked
+
+- **What is the difference from the backward approach?** Backward measures cost *from the source*; forward measures cost *to the destination*. Forward answers "best route to t" for every starting point in one run.
+- **Why does it print 1 -> 2 -> 7 -> 10 -> 12 here but 1 -> 3 -> 6 -> 10 -> 12 in Q1?** Both cost 16. The two methods meet the tie in a different order, and the strict `<` keeps whichever came first.
+- **Where is this used for real?** A GPS or a delivery company working out the best route *to* one depot from every location.

@@ -85,8 +85,10 @@ A 1 × 1 matrix is just one number, so multiply directly.
 
 ```c
 int half = n / 2;
-quarter(half, A, 0, 0, A11);    quarter(half, A, 0, half, A12);
-quarter(half, A, half, 0, A21); quarter(half, A, half, half, A22);
+quarter(half, A, 0, 0, A11);
+quarter(half, A, 0, half, A12);
+quarter(half, A, half, 0, A21);
+quarter(half, A, half, half, A22);
 /* same for B */
 ```
 
@@ -95,9 +97,15 @@ The four blocks start at `(0,0)`, `(0,half)`, `(half,0)` and `(half,half)`.
 **3. Conquer — the 7 recursive products**
 
 ```c
-add(half, A11, A22, T1); add(half, B11, B22, T2); strassen(half, T1, T2, M1);
-add(half, A21, A22, T1);                          strassen(half, T1, B11, M2);
-...
+/* M1 = (A11 + A22)(B11 + B22) */
+add(half, A11, A22, T1);
+add(half, B11, B22, T2);
+strassen(half, T1, T2, M1);
+
+/* M2 = (A21 + A22) B11 */
+add(half, A21, A22, T1);
+strassen(half, T1, B11, M2);
+...   /* M3 to M7 follow the same pattern, one product per block */
 ```
 
 `T1` and `T2` are scratch matrices that hold a sum or difference just long enough to pass it into the recursive call. They're reused for every product, because each `strassen` call finishes before the next line overwrites them.
@@ -105,12 +113,26 @@ add(half, A21, A22, T1);                          strassen(half, T1, B11, M2);
 **4. Combine**
 
 ```c
-add(half, M1, M4, T1); subtract(half, T1, M5, T2); add(half, T2, M7, C11); /* C11 = M1+M4-M5+M7 */
+/* C11 = M1 + M4 - M5 + M7 */
+add(half, M1, M4, T1);
+subtract(half, T1, M5, T2);
+add(half, T2, M7, C11);
+
+/* C12 = M3 + M5 */
 add(half, M3, M5, C12);
+
+/* C21 = M2 + M4 */
 add(half, M2, M4, C21);
-add(half, M1, M3, T1); subtract(half, T1, M2, T2); add(half, T2, M6, C22); /* C22 = M1+M3-M2+M6 */
-paste(half, C11, C, 0, 0);  paste(half, C12, C, 0, half);
-paste(half, C21, C, half, 0); paste(half, C22, C, half, half);
+
+/* C22 = M1 + M3 - M2 + M6 */
+add(half, M1, M3, T1);
+subtract(half, T1, M2, T2);
+add(half, T2, M6, C22);
+
+paste(half, C11, C, 0, 0);
+paste(half, C12, C, 0, half);
+paste(half, C21, C, half, 0);
+paste(half, C22, C, half, half);
 ```
 
 Each C operation takes only two operands, so a 4-term sum is built in steps through `T1` and `T2`.

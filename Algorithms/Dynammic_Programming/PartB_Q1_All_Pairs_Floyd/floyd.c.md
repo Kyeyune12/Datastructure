@@ -1,17 +1,17 @@
 # floyd.c
 
-**Part B, Question 1, in C.** All-pairs shortest paths with **Floyd–Warshall** (the slide's k-i-j loop), with a `nxt[][]` table for printing paths. Its output is identical to [Floyd.java](Floyd.java.md).
+**Part B, Question 1, in C.** **All-pairs shortest paths** with Floyd-Warshall, written exactly like the slide's triple loop. Same algorithm and same output as [Floyd.java](Floyd.java.md).
 
-**Language:** C · **Java version:** [Floyd.java](Floyd.java.md) · **Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
+**Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
 
 ## How to run
 
 ```sh
-gcc -O2 -o floyd floyd.c
+gcc floyd.c -o floyd
 ./floyd
 ```
 
-## The algorithm
+## The rule
 
 ```
 for k = 1 to n
@@ -20,51 +20,47 @@ for k = 1 to n
       A(i,j) = min[ A(i,j), A(i,k) + A(k,j) ]
 ```
 
-After round k, A(i, j) is the shortest i → j path whose in-between vertices are all numbered ≤ k. A full explanation is in [Floyd.java.md](Floyd.java.md#the-algorithm).
+After round k, A(i, j) is the shortest i -> j path that only stops at vertices 1..k on the way.
 
-## How the code is organised
+## What is inside
 
 | Part | Purpose |
 | --- | --- |
-| `#define MAXN 13`, `INF 1000000000` | Room for up to 12 vertices (index 0 unused) and "infinity" |
-| `int A[MAXN][MAXN], nxt[MAXN][MAXN];` | Global distance and next-step matrices |
-| `init(n)` | Resets the first n rows and columns: 0 on the diagonal, `INF` elsewhere. Lets the program reuse the globals for the second example |
-| `addEdge(u, v, w)` | `A[u][v] = w; nxt[u][v] = v;` |
-| `printMatrix(name, n)` | Prints A, showing `INF` for ∞ |
-| `floyd(n, showSteps)` | The triple loop. If `showSteps` is set, it builds a title such as `"A2 (via vertices 1..2):"` with `sprintf` and prints A after each round |
-| `printPath(i, j)` | Follows `nxt` from i to j |
-| `main` | Example 1 (3 vertices, round by round), then example 2 (the lecture graph, final matrix and five paths) |
+| `n`, `A[][]`, `next[][]` | Number of vertices, the distance matrix, and the first step on the best i -> j path |
+| `init(vertices)` | 0 on the diagonal, INF everywhere else |
+| `addEdge(u, v, w)` | Sets `A[u][v] = w` and `next[u][v] = v` |
+| `floyd(showSteps)` | The triple loop. With `showSteps = 1` it prints A1, A2, A3 ... |
+| `printMatrix()` | Prints A with row and column numbers |
+| `printPath(i, j)` | Follows `next[][]` from i until it reaches j |
 
-## Output
+When going through k is shorter, the first step of the new path is the first step towards k:
 
-```
-A0 (direct edges):
-          1    2    3
-    1     0    4   11
-    2     6    0    2
-    3     3  INF    0
-...
-A3 (via vertices 1..3):
-          1    2    3
-    1     0    4    6
-    2     5    0    2
-    3     3    7    0
-
-   1 ->  3 : cost   6   path 1 -> 2 -> 3
-   ...
-===== Example 2: slide-20 multistage graph =====
-   1 -> 12 : cost  16   path 1 -> 3 -> 6 -> 10 -> 12
-   4 ->  9 : no path
+```c
+A[i][j] = A[i][k] + A[k][j];
+next[i][j] = next[i][k];
 ```
 
-The full output, with every matrix, is in [output.txt](output.txt).
+## Examples
+
+1. The textbook 3-vertex graph, showing A0, A1, A2 and A3 step by step.
+2. The slide-20 multistage graph: all 12 × 12 distances, plus 5 sample paths (1 -> 12 costs 16).
 
 ## Complexity
 
-- **Θ(n³) time.**
-- **Θ(n²) space.** The matrices are fixed at 13 × 13 in this program.
+- **Time Θ(n³)**: three nested loops of n.
+- **Space Θ(n²)** for `A` and `next`.
 
-## C-specific notes
+## How the C file is written
 
-- Using global arrays keeps the function signatures simple. The cost is that only one graph can be held at a time, which is why `init` must run before each example.
-- To handle more than 12 vertices, raise `MAXN`.
+Same team style as every C file in this repo:
+
+- `#define` for sizes (`N`, `E`, `INF`) and `struct Edge { int from; int to; int cost; }` for one edge.
+- The graph is one global array `edges[]`; the result tables are global arrays, indexed from 1 so they match the lecture (index 0 is unused).
+- Every `if` and loop has braces, with one statement per line, so each step can be pointed at during the presentation.
+- `INF` is 1,000,000. That is far bigger than any real path cost here, and `INF + cost` still fits in an `int`.
+
+## Questions you may be asked
+
+- **Why must k be the OUTER loop?** A(i, j) for round k uses A(i, k) and A(k, j) from round k - 1. With k outside, every pair is updated with "stop-over k" before moving on to k + 1.
+- **Why not run Dijkstra n times?** You can if there are no negative edges. Floyd is shorter to write, handles negative edges, and is fast enough for small dense graphs.
+- **How does `next[][]` rebuild the path?** It stores only the first step. From that vertex we look up the first step again, until we reach j.

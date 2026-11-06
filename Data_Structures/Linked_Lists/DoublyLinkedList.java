@@ -1,18 +1,19 @@
-/**
- * javac DoublyLinkedList.java && java DoublyLinkedList
- *
- * A doubly linked list: each node links to the NEXT node AND the PREVIOUS node,
+/*
+ * Doubly Linked List
+ * Each node links to the NEXT node AND the PREVIOUS node,
  * so the list can be walked forwards and backwards.
  *
  *   null <-- [10] <--> [20] <--> [30] --> null
  *            head                tail
  *
  * Insert/delete at either end is O(1); everything else is O(n).
+ *
+ * Run: javac DoublyLinkedList.java && java DoublyLinkedList
  */
 public class DoublyLinkedList {
 
     // One box in the chain
-    private static class Node {
+    static class Node {
         int value;
         Node prev;   // the node before this one (null for the first node)
         Node next;   // the node after this one (null for the last node)
@@ -22,24 +23,16 @@ public class DoublyLinkedList {
         }
     }
 
-    private Node head;   // first node
-    private Node tail;   // last node
-    private int size;    // number of nodes
+    Node head;   // first node
+    Node tail;   // last node
+    int size;    // number of nodes
 
-    public int size() {
-        return size;
-    }
-
-    public boolean isEmpty() {
-        return size == 0;
+    boolean isEmpty() {
+        return head == null;
     }
 
     // Walks from the head to the node at the given position
-    private Node nodeAt(int index) {
-        if (index < 0 || index >= size) {
-            throw new IndexOutOfBoundsException("index " + index);
-        }
-
+    Node nodeAt(int index) {
         Node current = head;
         for (int i = 0; i < index; i++) {
             current = current.next;
@@ -48,7 +41,7 @@ public class DoublyLinkedList {
     }
 
     // Adds a value at the front of the list
-    public void insertHead(int value) {
+    void insertHead(int value) {
         Node newNode = new Node(value);
         newNode.next = head;
 
@@ -62,7 +55,7 @@ public class DoublyLinkedList {
     }
 
     // Adds a value at the end of the list
-    public void insertTail(int value) {
+    void insertTail(int value) {
         Node newNode = new Node(value);
         newNode.prev = tail;
 
@@ -76,9 +69,10 @@ public class DoublyLinkedList {
     }
 
     // Adds a value at a position (0 = front, size = end)
-    public void insert(int index, int value) {
+    void insert(int index, int value) {
         if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException("index " + index);
+            System.out.println("Invalid position " + index);
+            return;
         }
         if (index == 0) {
             insertHead(value);
@@ -102,7 +96,7 @@ public class DoublyLinkedList {
     }
 
     // Removes node n by linking its two neighbours to each other
-    private int unlink(Node n) {
+    int unlink(Node n) {
         // fix the link coming from the left
         if (n.prev == null) {
             head = n.next;           // n was the first node
@@ -121,30 +115,35 @@ public class DoublyLinkedList {
         return n.value;
     }
 
-    public int deleteHead() {
+    // Removes and returns the first value (-1 if the list is empty)
+    int deleteHead() {
         if (isEmpty()) {
-            throw new IllegalStateException("empty list");
+            System.out.println("List is empty!");
+            return -1;
         }
         return unlink(head);
     }
 
-    public int deleteTail() {
+    // Removes and returns the last value (-1 if the list is empty)
+    int deleteTail() {
         if (isEmpty()) {
-            throw new IllegalStateException("empty list");
+            System.out.println("List is empty!");
+            return -1;
         }
         return unlink(tail);   // O(1): tail.prev tells us the new last node
     }
 
-    public int delete(int index) {
+    // Removes and returns the value at a position (-1 if the position is invalid)
+    int delete(int index) {
+        if (index < 0 || index >= size) {
+            System.out.println("Invalid position " + index);
+            return -1;
+        }
         return unlink(nodeAt(index));
     }
 
-    public int get(int index) {
-        return nodeAt(index).value;
-    }
-
     // Returns the position of the value, or -1 if it is not in the list
-    public int search(int value) {
+    int search(int value) {
         Node current = head;
         int index = 0;
 
@@ -159,7 +158,7 @@ public class DoublyLinkedList {
     }
 
     // Prints from head to tail using the next links
-    public void printForward() {
+    void printForward() {
         Node current = head;
         while (current != null) {
             System.out.print(current.value + " ");
@@ -169,7 +168,7 @@ public class DoublyLinkedList {
     }
 
     // Prints from tail to head using the prev links
-    public void printBackward() {
+    void printBackward() {
         Node current = tail;
         while (current != null) {
             System.out.print(current.value + " ");
@@ -178,47 +177,25 @@ public class DoublyLinkedList {
         System.out.println();
     }
 
-    // Empties the list
-    public void clear() {
-        head = null;
-        tail = null;
-        size = 0;
-    }
-
-    // Shows the list like [10, 20, 30]
-    @Override
-    public String toString() {
-        String text = "[";
-        Node current = head;
-
-        while (current != null) {
-            text += current.value;
-            if (current.next != null) {
-                text += ", ";
-            }
-            current = current.next;
-        }
-        return text + "]";
-    }
-
     public static void main(String[] args) {
+        System.out.println("*** Doubly Linked List ***");
         DoublyLinkedList list = new DoublyLinkedList();
 
-        list.insertHead(20);     // [20]
-        list.insertHead(10);     // [10, 20]
-        list.insertTail(40);     // [10, 20, 40]
-        list.insert(2, 30);      // [10, 20, 30, 40]
+        list.insertHead(20);     // 20
+        list.insertHead(10);     // 10 20
+        list.insertTail(40);     // 10 20 40
+        list.insert(2, 30);      // 10 20 30 40
 
-        System.out.print("Forward: ");
+        System.out.print("Forward:  ");
         list.printForward();
         System.out.print("Backward: ");
         list.printBackward();
-        System.out.println("30 at " + list.search(30));
+        System.out.println("30 is at position " + list.search(30));
 
-        int a = list.deleteHead();   // removes 10
-        int b = list.deleteTail();   // removes 40
-        int c = list.delete(1);      // removes 30
-        System.out.println("Deleted " + a + ", " + b + ", " + c);
-        System.out.println(list);
+        System.out.println("Deleted head: " + list.deleteHead());   // 10
+        System.out.println("Deleted tail: " + list.deleteTail());   // 40
+        System.out.println("Deleted [1]:  " + list.delete(1));      // 30
+        System.out.print("Forward:  ");
+        list.printForward();
     }
 }

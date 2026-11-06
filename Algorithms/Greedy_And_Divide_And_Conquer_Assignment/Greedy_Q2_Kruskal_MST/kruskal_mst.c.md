@@ -85,7 +85,8 @@ for (int i = 0; i < N; i++) parent[i] = i;   /* everyone alone */
 
 ```c
 for (int i = 0; i < m && edgesUsed < N - 1; i++) {
-    int a = edges[i].from, b = edges[i].to;
+    int a = edges[i].from;
+    int b = edges[i].to;
     if (find(a) != find(b)) {          /* different groups -> no loop */
         unite(a, b);
         totalCost += edges[i].cost;

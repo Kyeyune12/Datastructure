@@ -12,7 +12,7 @@ Packages are loaded onto a conveyor belt (**enqueue**) and dispatched from the o
 |---|---|
 | `circular_queue-array.c` | C implementation: circular array queue with automatic package IDs |
 | `circular_queue-array.c.md` | line-by-line explanation, wrap-around trace, sample run, complexity |
-| `ConveyorDispatch.java` | Java implementation: `Package`, `ConveyorQueue` and `ConveyorDispatch` classes |
+| `ConveyorDispatch.java` | Java implementation: one class with a nested `Package` and the same queue functions as the C version |
 | `ConveyorDispatch.java.md` | explanation, sample run, C-vs-Java comparison |
 
 ## How to run

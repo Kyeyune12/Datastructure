@@ -55,7 +55,7 @@ int findLeak(int low, int high) {
     }
 }
 
-int main(void) {
+int main() {
     int last = SENSORS - 1;
 
     printf("Searching %d sensors for the leak...\n", SENSORS);

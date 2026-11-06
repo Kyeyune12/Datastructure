@@ -1,231 +1,147 @@
-/*
- * Warehouse Conveyor Package Dispatch System (Java)
- * ---------------------------------------------------
- * Implements a fixed-size circular array queue manually (no
- * java.util.Queue, no ArrayList, no shifting of elements).
- *
- * Circular-array invariants:
- *   front = index of the next package to be dispatched (dequeued)
- *   rear  = index of the most recently added package (enqueued)
- *   count = number of packages currently in the queue
- *
- * enqueue: rear = (rear + 1) % CAPACITY, then store at packages[rear]
- * dequeue: read packages[front], then front = (front + 1) % CAPACITY
- *
- * Neither operation ever shifts array elements. The array stays fixed;
- * only front/rear/count move (and wrap around using modulo).
- */
-
 import java.util.Scanner;
 
-/* ---------- 1. System model ---------- */
+/*
+ * Project B: Warehouse Conveyor Dispatch
+ * Data structure: Queue (FIFO) in a fixed-size CIRCULAR array.
+ *
+ * Packages are loaded at the rear (enqueue) and dispatched from the front
+ * (dequeue) in the order they arrived. front and rear wrap around with
+ * (index + 1) % CAPACITY, so no element is ever shifted.
+ *
+ * Run: javac ConveyorDispatch.java && java ConveyorDispatch
+ */
+public class ConveyorDispatch {
 
-class Package {
-    String id;
-    String destination;
+    static final int CAPACITY = 5;
 
-    Package(String id, String destination) {
-        this.id = id;
-        this.destination = destination;
+    // One package on the belt
+    static class Package {
+        int id;
+        String destination;
+
+        Package(int id, String destination) {
+            this.id = id;
+            this.destination = destination;
+        }
     }
 
-    @Override
-    public String toString() {
-        return "ID: " + id + " | Destination: " + destination;
-    }
-}
+    // The belt itself
+    static Package[] items = new Package[CAPACITY];
+    static int front = 0;   // index of the next package to leave
+    static int rear = -1;   // index of the last package that joined
+    static int count = 0;   // how many packages are on the belt
 
-/* ---------- Data structure layer (Queue mechanics only) ---------- */
-
-class ConveyorQueue {
-    private static final int CAPACITY = 5;
-
-    private Package[] packages;
-    private int front;
-    private int rear;
-    private int count;
-
-    ConveyorQueue() {
-        packages = new Package[CAPACITY];
-        initializeQueue();
-    }
-
-    void initializeQueue() {
-        front = 0;
-        rear = -1;
-        count = 0;
-    }
-
-    boolean isEmpty() {
+    static boolean isEmpty() {
         return count == 0;
     }
 
-    boolean isFull() {
+    static boolean isFull() {
         return count == CAPACITY;
     }
 
-    boolean enqueue(Package pkg) {
+    // Add a package at the rear
+    static void enqueue(Package p) {
         if (isFull()) {
-            System.out.println("Conveyor buffer is full.");
-            return false;
-        }
-
-        rear = (rear + 1) % CAPACITY;
-        packages[rear] = pkg;
-        count = count + 1;
-
-        System.out.println("Package added successfully.");
-        return true;
-    }
-
-    Package dequeue() {
-        if (isEmpty()) {
-            System.out.println("No packages waiting.");
-            return null;
-        }
-
-        Package pkg = packages[front];
-        packages[front] = null; // clear reference (not a shift)
-        front = (front + 1) % CAPACITY;
-        count = count - 1;
-
-        System.out.println("Dispatching package:");
-        System.out.println("  " + pkg);
-
-        return pkg;
-    }
-
-    Package peek() {
-        if (isEmpty()) {
-            System.out.println("No packages waiting.");
-            return null;
-        }
-
-        Package pkg = packages[front];
-        System.out.println("Next package:");
-        System.out.println("  " + pkg);
-
-        // Peek must NOT modify front, rear, or count.
-        return pkg;
-    }
-
-    void displayQueue() {
-        if (isEmpty()) {
-            System.out.println("Conveyor buffer is empty.");
+            System.out.println("Belt is full! Cannot load package #" + p.id + ".");
             return;
         }
+        rear = (rear + 1) % CAPACITY;   // move rear forward, wrap to 0 at the end
+        items[rear] = p;
+        count++;
+        System.out.println("Loaded package #" + p.id + " -> " + p.destination + " at slot " + rear + ".");
+    }
 
-        System.out.println("Packages currently waiting (FIFO order):");
+    // Remove and return the package at the front (null if the belt is empty)
+    static Package dequeue() {
+        if (isEmpty()) {
+            System.out.println("Belt is empty! Nothing to dispatch.");
+            return null;
+        }
+        Package p = items[front];
+        items[front] = null;              // clear the slot (nothing is shifted)
+        front = (front + 1) % CAPACITY;   // move front forward, wrap to 0 at the end
+        count--;
+        return p;
+    }
 
-        int index = front;
+    // Look at the front package without removing it (null if empty)
+    static Package peek() {
+        if (isEmpty()) {
+            return null;
+        }
+        return items[front];
+    }
+
+    // Print every package from front to rear
+    static void display() {
+        if (isEmpty()) {
+            System.out.println("Belt is empty.");
+            return;
+        }
+        System.out.println("Belt (front to rear):");
         for (int i = 0; i < count; i++) {
-            System.out.println("  [" + (i + 1) + "] " + packages[index]);
-            index = (index + 1) % CAPACITY;
+            int index = (front + i) % CAPACITY;
+            System.out.println("  Slot " + index + ": Package #" + items[index].id + " -> " + items[index].destination);
         }
-    }
-
-    int getCount() {
-        return count;
-    }
-
-    int getFront() {
-        return front;
-    }
-
-    int getRear() {
-        return rear;
-    }
-
-    static int getCapacity() {
-        return CAPACITY;
-    }
-}
-
-/* ---------- Application layer ---------- */
-
-public class ConveyorDispatch {
-
-    static void dispatchNextPackage(ConveyorQueue queue) {
-        if (queue.isEmpty()) {
-            System.out.println("No package available for dispatch.");
-            return;
-        }
-
-        Package pkg = queue.dequeue();
-
-        System.out.println("Conveyor moving package...");
-        System.out.println("Package ID: " + pkg.id);
-        System.out.println("Destination: " + pkg.destination);
-        System.out.println("Package dispatched successfully.");
     }
 
     public static void main(String[] args) {
-        ConveyorQueue queue = new ConveyorQueue();
-        Scanner scanner = new Scanner(System.in);   // reads what the user types
+        Scanner scanner = new Scanner(System.in);
+        int nextId = 1;   // package IDs are given out automatically
+        int choice = 0;
 
-        int choice;
+        System.out.println("*** Warehouse Conveyor Dispatch ***");
 
-        do {
-            System.out.println("\n================================");
-            System.out.println(" WAREHOUSE CONVEYOR DISPATCH");
-            System.out.println("================================");
-            System.out.println("1. Add Package");
-            System.out.println("2. Dispatch Next Package");
-            System.out.println("3. View Next Package");
-            System.out.println("4. View Waiting Packages");
-            System.out.println("5. Show Buffer Status");
+        while (choice != 6) {
+            System.out.println("\n1. Load package (enqueue)");
+            System.out.println("2. Dispatch next package (dequeue)");
+            System.out.println("3. Next package (peek)");
+            System.out.println("4. View the belt");
+            System.out.println("5. isEmpty / isFull");
             System.out.println("6. Exit");
-            System.out.println("================================");
             System.out.print("Enter choice: ");
 
-            String line = scanner.nextLine().trim();
-            try {
-                choice = Integer.parseInt(line);
-            } catch (NumberFormatException e) {
-                choice = -1;
+            if (!scanner.hasNextInt()) {   // the user typed letters, not a number
+                scanner.nextLine();
+                System.out.println("Please enter a number.");
+                continue;
             }
+            choice = scanner.nextInt();
+            scanner.nextLine();            // throw away the Enter key
 
-            switch (choice) {
-                case 1:
-                    System.out.print("Enter package ID: ");
-                    String id = scanner.nextLine().trim();
+            if (choice == 1) {
+                System.out.print("Enter destination: ");
+                String destination = scanner.nextLine();
+                enqueue(new Package(nextId, destination));
+                nextId++;
 
-                    System.out.print("Enter destination: ");
-                    String destination = scanner.nextLine().trim();
+            } else if (choice == 2) {
+                Package p = dequeue();
+                if (p != null) {
+                    System.out.println("Dispatched package #" + p.id + " -> " + p.destination + ".");
+                }
 
-                    queue.enqueue(new Package(id, destination));
-                    break;
+            } else if (choice == 3) {
+                Package p = peek();
+                if (p != null) {
+                    System.out.println("Next to dispatch: package #" + p.id + " -> " + p.destination);
+                } else {
+                    System.out.println("Belt is empty.");
+                }
 
-                case 2:
-                    dispatchNextPackage(queue);
-                    break;
+            } else if (choice == 4) {
+                display();
 
-                case 3:
-                    queue.peek();
-                    break;
+            } else if (choice == 5) {
+                System.out.println("isEmpty: " + isEmpty() + "   isFull: " + isFull());
 
-                case 4:
-                    queue.displayQueue();
-                    break;
+            } else if (choice == 6) {
+                System.out.println("Exiting. Goodbye!");
 
-                case 5:
-                    System.out.println("Capacity: " + ConveyorQueue.getCapacity());
-                    System.out.println("Packages: " + queue.getCount());
-                    System.out.println("Available: " + (ConveyorQueue.getCapacity() - queue.getCount()));
-                    System.out.println("Front index: " + queue.getFront());
-                    System.out.println("Rear index: " + queue.getRear());
-                    break;
-
-                case 6:
-                    System.out.println("Exiting...");
-                    break;
-
-                default:
-                    System.out.println("Invalid option.");
-                    break;
+            } else {
+                System.out.println("Invalid choice. Please enter 1-6.");
             }
-
-        } while (choice != 6);
+        }
 
         scanner.close();
     }

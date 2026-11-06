@@ -1,8 +1,8 @@
 # ConveyorDispatch.java
 
-**Project B (Queue), in Java.** The *Warehouse Conveyor Package Dispatch System*: a **circular queue in a fixed array of 5 slots**, written by hand (no `java.util.Queue`, no `ArrayList`, no shifting). Packages are dispatched first in, first out.
+**Project B (Queue), Java version.** The same Warehouse Conveyor Dispatch system as [circular_queue-array.c](circular_queue-array.c.md): a **circular array** queue of 5 packages, built by hand with no `java.util.Queue` and no `ArrayList`.
 
-**Language:** Java · **C version:** [circular_queue-array.c](circular_queue-array.c.md) · **Project overview:** [README.md](README.md) · **Stack counterpart:** [NavigationStack.java](../../Stacks/Search_and_Rescue_Backtrack/NavigationStack.java.md)
+**Project overview:** [README.md](README.md)
 
 ## How to run
 
@@ -11,177 +11,49 @@ javac ConveyorDispatch.java
 java ConveyorDispatch
 ```
 
-> **Renamed and moved.** This file was uploaded as `Package.java` inside `Project_A_Stack/java/src`. Two things were wrong with that:
-> 1. It is the **queue** project, not the stack, so it now lives in `Queues/`.
-> 2. Its `public` class is `ConveyorDispatch`, and Java requires a public class to be in a file of the same name. As `Package.java` it fails with *"class ConveyorDispatch is public, should be declared in a file named ConveyorDispatch.java"*. As `ConveyorDispatch.java` it compiles.
->
-> `javac` produces three class files (`Package.class`, `ConveyorQueue.class`, `ConveyorDispatch.class`), one for each class in the file. Run the one that has `main`: `ConveyorDispatch`.
+## What is inside
 
-## Three classes, three layers
+One class, `ConveyorDispatch`, with:
 
-The file splits the program into layers, as its comments say:
+- a nested `Package` class (`id`, `destination`)
+- the queue itself as `static` fields: `Package[] items`, `front = 0`, `rear = -1`, `count = 0`
+- the operations as `static` methods, in the same order and with the same names as the C file
 
-| Class | Layer | Job |
-|---|---|---|
-| `Package` | system model | one package: `id` and `destination` |
-| `ConveyorQueue` | data structure | the circular-queue mechanics only |
-| `ConveyorDispatch` | application | menu, input, and the "conveyor moving…" story around a dequeue |
+| Method | What it does | Cost |
+| --- | --- | --- |
+| `isEmpty()` / `isFull()` | `count == 0` / `count == CAPACITY` | O(1) |
+| `enqueue(p)` | `rear = (rear + 1) % CAPACITY; items[rear] = p; count++;` | O(1) |
+| `dequeue()` | Read `items[front]`, clear the slot, `front = (front + 1) % CAPACITY; count--;` Returns `null` if empty | O(1) |
+| `peek()` | Front package without removing it | O(1) |
+| `display()` | Every package from front to rear, with its slot number | O(n) |
 
-Keeping the queue logic out of the menu code means `ConveyorQueue` could be reused in any program, and it can be marked on its own. Only `ConveyorDispatch` is `public`; the other two are package-private helper classes in the same file.
+## Menu and sample run
 
-A side note: `java.lang.Package` already exists in Java's standard library. A class you declare yourself with the same name takes priority inside this file, so it works, but a name like `Parcel` would avoid any confusion.
-
-## `Package`
-
-```java
-class Package {
-    String id;
-    String destination;
-    Package(String id, String destination) { ... }
-    @Override public String toString() { return "ID: " + id + " | Destination: " + destination; }
-}
-```
-
-Overriding `toString()` lets the code print a package with `"  " + pkg`, so the format is defined in one place.
-
-## `ConveyorQueue` — the circular queue
-
-### State
-
-```java
-private static final int CAPACITY = 5;
-private Package[] packages;   // fixed array, never resized
-private int front;            // index of the next package to dispatch
-private int rear;             // index of the most recently added package
-private int count;            // number of packages waiting
-```
-
-`CAPACITY` is `static final`, a single constant shared by all queues. The fields are `private`, so only the queue's own methods can move `front` and `rear`.
-
-`initializeQueue()` sets `front = 0`, `rear = -1`, `count = 0`, so the first enqueue goes to slot `(−1 + 1) % 5 = 0`.
-
-**Why `count`:** with only `front` and `rear`, "empty" and "full" look the same (in both, `rear` is one behind `front`, wrapping around). `count` tells them apart, so `isEmpty()` is `count == 0`, `isFull()` is `count == CAPACITY`, and all 5 slots are usable.
-
-### `enqueue(Package pkg)` — O(1)
-
-```java
-if (isFull()) { System.out.println("Conveyor buffer is full."); return false; }
-rear = (rear + 1) % CAPACITY;    // advance and wrap
-packages[rear] = pkg;
-count = count + 1;
-return true;
-```
-
-Overflow is checked first. `% CAPACITY` turns index 5 back into 0, so freed slots at the start of the array are reused. It returns `true` or `false`, so a caller can tell whether the package was accepted.
-
-### `dequeue()` — O(1)
-
-```java
-if (isEmpty()) { System.out.println("No packages waiting."); return null; }
-Package pkg = packages[front];
-packages[front] = null;          // clear reference (not a shift)
-front = (front + 1) % CAPACITY;
-count = count - 1;
-return pkg;
-```
-
-Setting the slot to `null` is a Java-specific touch. Otherwise the array would still hold a reference to a dispatched package, and the garbage collector couldn't free it until the slot was overwritten. It doesn't shift anything; the other packages stay where they are.
-
-### `peek()` — O(1)
-
-Returns `packages[front]` without changing `front`, `rear` or `count` (the code comments say so explicitly).
-
-### `displayQueue()` — O(n)
-
-```java
-int index = front;
-for (int i = 0; i < count; i++) {
-    System.out.println("  [" + (i + 1) + "] " + packages[index]);
-    index = (index + 1) % CAPACITY;
-}
-```
-
-Visits exactly `count` slots starting at `front`, wrapping with `%`, and numbers them 1, 2, 3… in FIFO order.
-
-### Getters
-
-`getCount()`, `getFront()`, `getRear()` and `static getCapacity()` give read-only access for the "Show Buffer Status" option without making the fields public.
-
-## `ConveyorDispatch` — the application
-
-### `dispatchNextPackage`
-
-Checks `isEmpty()` first, so an empty belt gets the application's own message ("No package available for dispatch."). Then it calls `dequeue()` and prints the conveyor story around the result.
-
-### `main`
-
-```java
-String line = scanner.nextLine().trim();
-try {
-    choice = Integer.parseInt(line);
-} catch (NumberFormatException e) {
-    choice = -1;
-}
-```
-
-Every input is read as a **whole line** with `scanner.nextLine()`, then converted to a number. Bad input becomes `-1`, which falls through to `"Invalid option."` and can never crash the program. Reading full lines also means destinations **can contain spaces** ("Fort Portal" works), unlike the C version's `%29s`.
-
-The `switch` handles 1 (add), 2 (dispatch), 3 (peek), 4 (list), 5 (status: capacity, count, available, front and rear index) and 6 (exit). The `do … while (choice != 6)` loop runs the menu at least once.
-
-## Sample run (shows wrap-around and the full check)
-
-Input: add P1 Kampala, P2 Entebbe, P3 Jinja → list → dispatch → add P4 Mbarara, P5 Gulu, P6 Mbale, P7 Lira → status → peek → exit. Menu lines are omitted.
+The menu is the same as the C version: `1` load · `2` dispatch · `3` peek · `4` view · `5` isEmpty/isFull · `6` exit. IDs are given out automatically.
 
 ```
-Package added successfully.
-Package added successfully.
-Package added successfully.
-Packages currently waiting (FIFO order):
-  [1] ID: P1 | Destination: Kampala
-  [2] ID: P2 | Destination: Entebbe
-  [3] ID: P3 | Destination: Jinja
-Dispatching package:
-  ID: P1 | Destination: Kampala
-Conveyor moving package...
-Package ID: P1
-Destination: Kampala
-Package dispatched successfully.
-Package added successfully.
-Package added successfully.
-Package added successfully.
-Conveyor buffer is full.
-Capacity: 5
-Packages: 5
-Available: 0
-Front index: 1
-Rear index: 0
-Next package:
-  ID: P2 | Destination: Entebbe
-Exiting...
+Loaded package #1 -> A at slot 0.     ... (#2 to #5 fill slots 1 to 4)
+Belt is full! Cannot load package #6.
+Dispatched package #1 -> A.
+Loaded package #7 -> G at slot 0.     <- wrap-around
+Belt (front to rear):
+  Slot 1: Package #2 -> B
+  ...
+  Slot 0: Package #7 -> G
 ```
-
-**Front index 1, rear index 0** shows the wrap-around. P6 was stored in slot 0, the slot P1 left, because `rear = (4 + 1) % 5 = 0`. The queue is full with `rear` *behind* `front`, which is exactly the case `count` exists to handle.
-
-## Complexity
-
-| Operation | Time |
-|---|---|
-| `enqueue`, `dequeue`, `peek`, `isEmpty`, `isFull` | **O(1)** |
-| `displayQueue` | O(n) |
-| Space | O(CAPACITY), fixed |
 
 ## C vs Java
 
-| | `circular_queue-array.c` | `ConveyorDispatch.java` |
-|---|---|---|
-| Structure | one `ConveyorQueue` struct, free functions taking `q` | `ConveyorQueue` class with private fields |
-| Return a dequeued package | output parameter + `int` success flag | return the object, or `null` |
-| Dispatched slot | left as is (stale) | set to `null` for the garbage collector |
-| Package ID | automatic number | typed in by the user |
-| Destinations with spaces | no (`%29s`) | yes (`nextLine()`) |
-| Bad menu input | `scanf` check + clear the line | `parseInt` in `try/catch` |
-| Layers | single file of functions | model / data structure / application classes |
+| | C | Java |
+| --- | --- | --- |
+| Package | `struct Package` with a `char[30]` name | `class Package` with a `String` |
+| Queue state | `struct Queue` passed by pointer | `static` fields in the class |
+| "Nothing to return" | Function returns 0 | Method returns `null` |
+| Bad menu input | `scanf` return value checked | `scanner.hasNextInt()` checked |
+| Destinations with spaces | No (`%s` stops at a space) | Yes (`nextLine()`) |
 
-## What changed (simplified version)
+## Questions you may be asked
 
-The program still uses `java.util.Scanner` to read what the user types; it is the standard, well-known way to read keyboard input. The only change is layout: `try { ... } catch { ... }` blocks that were squeezed onto two lines are now spread over separate lines with braces. The queue itself (`ConveyorQueue`) and the menu options did not change, so the program behaves exactly as before.
+- **Why set `items[front] = null` in `dequeue`?** Not to shift anything. It lets Java's garbage collector free the package once it has left the belt.
+- **Why is there no `ArrayList`?** The brief says to build the structure by hand, and a fixed belt of 5 slots is exactly what a circular array models.
+- **What happens when the belt is full?** `enqueue` prints `Belt is full!` and nothing is stored; the package ID still advances.

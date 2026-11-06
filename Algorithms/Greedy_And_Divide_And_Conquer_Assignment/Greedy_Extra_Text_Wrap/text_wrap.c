@@ -21,18 +21,21 @@
 #define WIDTH 20   /* maximum characters per line */
 
 /* Prints one line between bars so you can see the width limit */
-void printLine(const char *line) {
+void printLine(char *line) {
+    /* %-*s pads the line with spaces on the right up to WIDTH characters */
     printf("|%-*s|\n", WIDTH, line);
 }
 
-void printBorder(void) {
+void printBorder() {
     printf("|");
-    for (int i = 0; i < WIDTH; i++) printf("-");
+    for (int i = 0; i < WIDTH; i++) {
+        printf("-");
+    }
     printf("|\n");
 }
 
-int main(void) {
-    const char *words[] = {
+int main() {
+    char *words[] = {
         "Greedy", "algorithms", "make", "the", "best", "choice", "at", "each",
         "step", "and", "never", "go", "back", "to", "change", "it"
     };

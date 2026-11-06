@@ -1,77 +1,80 @@
 # bcost.c
 
-**Part A, Question 1, in C.** The **backward approach** (*BGraph*) on the lecture's 12-vertex multistage graph, assuming BCOST(l) is already computed whenever BCOST(j) needs it. The algorithm and output are identical to [BCost.java](BCost.java.md).
+**Part A, Question 1, in C.** The **backward approach** (BGraph) on the lecture's 12-vertex multistage graph (slide 20), assuming BCOST(l) is ready whenever BCOST(j) needs it. Same algorithm and same output as [BCost.java](BCost.java.md).
 
-**Language:** C · **Java version:** [BCost.java](BCost.java.md) · **Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
+**Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
 
 ## How to run
 
 ```sh
-gcc -O2 -o bcost bcost.c
+gcc bcost.c -o bcost
 ./bcost
 ```
 
-## The recurrence
+## The rule
 
 ```
 BCOST(s) = 0
 BCOST(j) = min over every edge <l, j> of { BCOST(l) + c(l, j) }
-D(j)     = the l that gave the minimum
+D(j)     = the l that gave the minimum   (used to rebuild the path)
 ```
 
-BCOST(j) is the cheapest cost **from the source s to j**. This is the textbook's naming; the lecture slides use these names the other way round.
+The vertices are numbered stage by stage, so every edge <l, j> has l < j. Looping j = s+1 ... n therefore always finds BCOST(l) already worked out.
 
-The vertices are numbered stage by stage, so every edge ⟨l, j⟩ has l < j. Looping j = s+1 … n in numeric order therefore always has BCOST(l) ready.
-
-## How the code is organised
+## What is inside
 
 | Part | Purpose |
 | --- | --- |
-| `#define N 12`, `MAXE 64`, `INF 1000000000` | Graph size, space for the predecessor lists, and "infinity" (INF + weight still fits in an `int`) |
-| `typedef struct { int u, v, w; } Edge;` | One directed, weighted edge |
-| `edges[]`, `E` | The 21 lecture edges, and how many there are (`sizeof(edges)/sizeof(edges[0])`) |
-| `pred[N+1][MAXE]`, `predCount[]` | `pred[v][k]` is the position in `edges[]` of the k-th edge **into** v |
-| `buildPredecessors()` | Fills `pred` in one pass over the edges |
-| `bgraph(s, t, bcost, d, path, &len)` | The DP. Returns BCOST(t) and writes the path into `path[]`, with its length in `len` |
-| `main` | Calls `bgraph(1, 12, …)` and prints the table, the distance and the path |
+| `struct Edge edges[E]` | The 21 edges of the slide-20 graph |
+| `bcost[]`, `d[]` | Cheapest cost from s to j, and the vertex we came from |
+| `bgraph(s)` | The DP: fills `bcost[]` and `d[]` |
+| `printPath(j)` | Prints the path to j by **recursion**: print the path to `d[j]` first, then `-> j` |
+| `main` | Runs `bgraph(1)` and prints the table, the distance and the path |
 
 The core loop:
 
 ```c
-for (int j = s + 1; j <= N; j++)                     /* stage order */
-    for (int k = 0; k < predCount[j]; k++) {         /* each incoming edge once */
-        Edge e = edges[pred[j][k]];
-        if (bcost[e.u] != INF && bcost[e.u] + e.w < bcost[j]) {
-            bcost[j] = bcost[e.u] + e.w;
-            d[j] = e.u;
+for (int j = s + 1; j <= N; j++) {          // stage order
+    for (int i = 0; i < E; i++) {
+        int l = edges[i].from;
+        int c = edges[i].cost;
+        if (edges[i].to != j) {
+            continue;                       // only edges that END at j
+        }
+        if (bcost[l] != INF && bcost[l] + c < bcost[j]) {
+            bcost[j] = bcost[l] + c;
+            d[j] = l;
         }
     }
+}
 ```
-
-**Rebuilding the path:** follow `d[]` backwards from t into a temporary array, then copy it into `path[]` in reverse so it reads source-to-target.
 
 ## Output
 
-Same as the Java version:
-
 ```
-  j | BCOST(j) | D(j)
-  1 |        0 |    -
-  2 |        9 |    1
-  ...
- 12 |       16 |   10
 Shortest distance 1 -> 12 = 16
 Path: 1 -> 3 -> 6 -> 10 -> 12
 ```
 
-See [output.txt](output.txt) for the full table. On a tie (BCOST(10) through 6 or through 7, both 14), the strict `<` keeps the first one, so the equally short **1 → 2 → 7 → 10 → 12** isn't printed.
+The full table is in [output.txt](output.txt).
 
 ## Complexity
 
-- **Time Θ(n + e)**, since each edge is examined once through `pred`.
-- **Space O(n)** for `bcost` and `d`, plus the fixed-size `pred` table.
+- **Time O(n · e) as written:** for every vertex j the loop scans the whole edge list. Keeping a list of incoming edges for each vertex would make it Θ(n + e), which is the figure in [answer.md](answer.md). With 12 vertices and 21 edges the difference is not noticeable, and the simple loop is much easier to explain.
+- **Space O(n)** for `bcost[]` and `d[]`.
 
-## C-specific notes
+## How the C file is written
 
-- All arrays have fixed sizes set by `#define`. A vertex with more than `MAXE` incoming edges would overflow `pred`, which is fine for this graph but worth knowing.
-- Arrays are indexed from 1 to match the lecture, so they are declared with size `N + 1` and index 0 is unused.
+Same team style as every C file in this repo:
+
+- `#define` for sizes (`N`, `E`, `INF`) and `struct Edge { int from; int to; int cost; }` for one edge.
+- The graph is one global array `edges[]`; the result tables are global arrays, indexed from 1 so they match the lecture (index 0 is unused).
+- Every `if` and loop has braces, with one statement per line, so each step can be pointed at during the presentation.
+- `INF` is 1,000,000. That is far bigger than any real path cost here, and `INF + cost` still fits in an `int`.
+
+## Questions you may be asked
+
+- **Why can you loop j in numeric order?** Because every edge goes from a lower number to a higher number, so all of j's predecessors are finished first.
+- **Why `bcost[l] != INF` before adding?** It skips vertices that cannot be reached yet, so we never treat "infinity + cost" as a real path.
+- **Why does `printPath` stop when `d[j] == 0`?** Only the source has no predecessor, so `d[j] == 0` means "we are back at the start".
+- **There are two shortest paths of cost 16. Why does it print this one?** The test is a strict `<`, so on a tie the first edge found is kept.

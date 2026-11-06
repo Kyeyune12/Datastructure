@@ -23,7 +23,9 @@
 
 /* An edge = a possible cable between two buildings */
 struct Edge {
-    int from, to, cost;
+    int from;
+    int to;
+    int cost;
 };
 
 int parent[N]; /* parent[i] = the "leader" of building i's group */
@@ -54,8 +56,8 @@ void sortEdges(struct Edge e[], int m) {
     }
 }
 
-int main(void) {
-    const char *buildings[N] = {"Library", "Admin", "Lab", "Hostel", "Cafeteria", "Hall"};
+int main() {
+    char *buildings[N] = {"Library", "Admin", "Lab", "Hostel", "Cafeteria", "Hall"};
 
     struct Edge edges[] = {
         {0, 1, 4},  /* Library - Admin     */
@@ -73,7 +75,9 @@ int main(void) {
     sortEdges(edges, m);
 
     /* At the start, every building is its own group */
-    for (int i = 0; i < N; i++) parent[i] = i;
+    for (int i = 0; i < N; i++) {
+        parent[i] = i;
+    }
 
     int totalCost = 0;
     int edgesUsed = 0;
@@ -82,7 +86,8 @@ int main(void) {
 
     /* STEP 2: take the cheapest edges that don't make a loop */
     for (int i = 0; i < m && edgesUsed < N - 1; i++) {
-        int a = edges[i].from, b = edges[i].to;
+        int a = edges[i].from;
+        int b = edges[i].to;
 
         if (find(a) != find(b)) {              /* different groups -> no loop */
             unite(a, b);
