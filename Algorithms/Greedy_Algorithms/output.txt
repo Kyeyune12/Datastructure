@@ -1,0 +1,5 @@
+Optimal fractional value: 240.0
+Item 0: 1.0
+Item 1: 1.0
+Item 2: 0.6666666666666666
+Selected original indices: 0 3 4 

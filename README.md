@@ -13,9 +13,9 @@ Every topic has a **C** version and a **Java** version of the same program with 
 | [`Data_Structures/Linked_Lists`](Data_Structures/Linked_Lists) | Singly, doubly and circular linked lists; big-number multiplication with a list |
 | [`Data_Structures/Stacks`](Data_Structures/Stacks) | Array stack vs linked stack; infix → postfix/prefix and evaluation; **Project A: Search & Rescue Backtrack** |
 | [`Data_Structures/Queues`](Data_Structures/Queues) | Circular-array queue vs linked queue; **Project B: Warehouse Conveyor Dispatch** |
-| [`Data_Structures/Trees`](Data_Structures/Trees) | Lecture notes: tree traversal, backtracking, branch and bound (PDF) |
-| [`Algorithms/Asymptotic_Analysis`](Algorithms/Asymptotic_Analysis) | Big-O of loops, reading-exercise algorithm |
-| [`Algorithms/Greedy_Algorithms`](Algorithms/Greedy_Algorithms), [`Divide_And_Conquer`](Algorithms/Divide_And_Conquer) | Written problem sets |
+| [`Data_Structures/Trees`](Data_Structures/Trees) | Lecture notes (PDF) plus code for them: tree traversals (BFS/DFS), 4-queens backtracking and 0/1 knapsack branch and bound, in C and Java |
+| [`Algorithms/Asymptotic_Analysis`](Algorithms/Asymptotic_Analysis) | Big-O of loops and the reading exercise (notes), plus `AsymptoticCounters` in C and Java that counts the operations and checks every formula in the notes |
+| [`Algorithms/Greedy_Algorithms`](Algorithms/Greedy_Algorithms), [`Divide_And_Conquer`](Algorithms/Divide_And_Conquer) | Written problem sets, each with its runnable program in C and Java (fractional knapsack and activity selection; merge sort, quicksort and binary search) |
 | [`Algorithms/Greedy_And_Divide_And_Conquer_Assignment`](Algorithms/Greedy_And_Divide_And_Conquer_Assignment) | Bandwidth allocation, Kruskal MST, text wrapping, water-leak search, Strassen, longest common prefix, IP route summarisation |
 | [`Algorithms/Dynammic_Programming`](Algorithms/Dynammic_Programming) | Multistage graphs (backward/forward), general graphs, Floyd-Warshall, negative weights, 0/1 knapsack |
 
