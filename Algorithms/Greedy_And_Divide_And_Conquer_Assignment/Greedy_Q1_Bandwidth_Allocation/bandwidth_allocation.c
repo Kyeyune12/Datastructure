@@ -37,7 +37,7 @@ void sortByPriority(struct Request r[], int n) {
     }
 }
 
-int main(void) {
+int main() {
     int totalBandwidth = 100; /* Mbps available on the link */
 
     struct Request requests[] = {

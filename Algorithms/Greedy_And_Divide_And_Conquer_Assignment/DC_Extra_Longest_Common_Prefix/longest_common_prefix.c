@@ -26,7 +26,7 @@
 
 /* COMBINE step: how many starting letters do words a and b share,
    looking at no more than 'limit' letters? */
-int commonLength(const char *a, const char *b, int limit) {
+int commonLength(char *a, char *b, int limit) {
     int i = 0;
     while (i < limit && a[i] != '\0' && b[i] != '\0' && a[i] == b[i]) {
         i++;
@@ -35,7 +35,7 @@ int commonLength(const char *a, const char *b, int limit) {
 }
 
 /* Length of the common prefix of words[low..high] */
-int lcp(const char *words[], int low, int high) {
+int lcp(char *words[], int low, int high) {
     /* BASE CASE: only one word -> its whole length */
     if (low == high) {
         return strlen(words[low]);
@@ -49,20 +49,26 @@ int lcp(const char *words[], int low, int high) {
     int right = lcp(words, mid + 1, high);
 
     /* COMBINE: the shorter of the two, then compare one word from each half */
-    int limit = (left < right) ? left : right;
+    int limit = left;
+    if (right < limit) {
+        limit = right;
+    }
     int result = commonLength(words[low], words[mid + 1], limit);
 
+    /* %.*s prints only the first N letters of a word (N comes first) */
     printf("  combine \"%.*s\" + \"%.*s\" -> \"%.*s\"\n",
            left, words[low], right, words[mid + 1], result, words[low]);
     return result;
 }
 
-int main(void) {
-    const char *words[] = {"interview", "internet", "interval", "internal", "interact"};
+int main() {
+    char *words[] = {"interview", "internet", "interval", "internal", "interact"};
     int n = sizeof(words) / sizeof(words[0]);
 
     printf("Words: ");
-    for (int i = 0; i < n; i++) printf("%s ", words[i]);
+    for (int i = 0; i < n; i++) {
+        printf("%s ", words[i]);
+    }
     printf("\n\n");
 
     int length = lcp(words, 0, n - 1);

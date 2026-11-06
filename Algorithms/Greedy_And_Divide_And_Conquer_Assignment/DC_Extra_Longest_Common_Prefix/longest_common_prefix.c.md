@@ -43,9 +43,11 @@ Building new strings in C means allocating memory, copying characters and rememb
 ### `commonLength` — the combine step
 
 ```c
-int commonLength(const char *a, const char *b, int limit) {
+int commonLength(char *a, char *b, int limit) {
     int i = 0;
-    while (i < limit && a[i] != '\0' && b[i] != '\0' && a[i] == b[i]) i++;
+    while (i < limit && a[i] != '\0' && b[i] != '\0' && a[i] == b[i]) {
+        i++;
+    }
     return i;
 }
 ```
@@ -59,12 +61,17 @@ Counts how many starting letters `a` and `b` share, looking at no more than `lim
 ### `lcp` — the recursion
 
 ```c
-int lcp(const char *words[], int low, int high) {
-    if (low == high) return strlen(words[low]);            /* BASE CASE */
+int lcp(char *words[], int low, int high) {
+    if (low == high) {                                     /* BASE CASE */
+        return strlen(words[low]);
+    }
     int mid = (low + high) / 2;                            /* DIVIDE */
     int left  = lcp(words, low, mid);                      /* CONQUER */
     int right = lcp(words, mid + 1, high);
-    int limit = (left < right) ? left : right;             /* COMBINE */
+    int limit = left;                                      /* COMBINE */
+    if (right < limit) {
+        limit = right;
+    }
     int result = commonLength(words[low], words[mid + 1], limit);
     printf("  combine \"%.*s\" + \"%.*s\" -> \"%.*s\"\n", ...);
     return result;

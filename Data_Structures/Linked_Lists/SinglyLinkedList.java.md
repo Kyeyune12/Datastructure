@@ -1,8 +1,12 @@
 # SinglyLinkedList.java
 
-A singly linked list of `int` values with both a `head` and a `tail` pointer. It supports inserting and deleting at either end or at any position, and searching.
+A **singly linked list**: each node holds a value and a link to the **next** node. We keep `head` (first node), `tail` (last node) and `size`.
 
-**Language:** Java · **Related:** [DoublyLinkedList](DoublyLinkedList.java.md) · [CircularLinkedList](CircularLinkedList.java.md)
+```
+head --> [10] --> [20] --> [30] --> null
+                            ^
+                           tail
+```
 
 ## How to run
 
@@ -11,68 +15,44 @@ javac SinglyLinkedList.java
 java SinglyLinkedList
 ```
 
-## How the list is stored
-
-```
-head                         tail
- │                            │
- ▼                            ▼
-[10] ──► [20] ──► [30] ──► [40] ──► null
-```
-
-- Each `Node` holds a `value` and a `next` link to the node after it.
-- The list remembers `head` (first node), `tail` (last node) and `size` (number of nodes).
-- An empty list has `head == null` and `tail == null`.
-
 ## Operations
 
-| Method | What it does | Time |
+| Method | What it does | Cost |
 | --- | --- | --- |
-| `insertHead(v)` | New node points at the old head and becomes the head | **O(1)** |
-| `insertTail(v)` | Old tail points at the new node, which becomes the tail | **O(1)** (thanks to the `tail` pointer) |
-| `insert(index, v)` | Walks to the node *before* `index` and links the new node in after it | O(n) |
-| `deleteHead()` | Moves `head` forward one node. If the list becomes empty, also clears `tail` | **O(1)** |
-| `deleteTail()` | Must walk to the second-last node, because nodes have no backward link | O(n) |
-| `delete(index)` | Walks to the node before `index` and makes it skip over the removed node | O(n) |
-| `get(index)` | Walks `index` steps from the head | O(n) |
-| `search(v)` | Position of the first match, or −1 | O(n) |
-| `clear()`, `size()`, `isEmpty()`, `toString()` | Helpers | O(1), or O(n) for `toString` |
+| `insertHead(v)` | New node points to the old head, then becomes the head | O(1) |
+| `insertTail(v)` | Old tail points to the new node, then it becomes the tail | O(1) |
+| `insert(i, v)` | Walk to the node **before** position i and link the new node after it | O(n) |
+| `deleteHead()` | Move `head` to the second node | O(1) |
+| `deleteTail()` | Walk to the second-last node, because there are no backward links | O(n) |
+| `delete(i)` | Walk to the node before i and skip over the deleted node | O(n) |
+| `search(v)` | Walk from the head; return the position or -1 | O(n) |
+| `display()` | Print `10 -> 20 -> ... -> null` | O(n) |
+| `nodeAt(i)` | Helper: walk i steps from the head | O(n) |
 
-### Inserting in the middle, step by step
+The key line in every delete is the **skip**:
 
-To insert 30 at position 2 in `[10, 20, 40]`:
-
+```java
+before.next = before.next.next;   // skip over the deleted node
 ```
-1. before = nodeAt(1)            before ─► [20] ──► [40]
-2. newNode.next = before.next             [30] ──► [40]
-3. before.next = newNode         [20] ──► [30] ──► [40]
-```
-
-The order matters: if step 3 ran first, the link to `[40]` would be lost.
-
-## Errors
-
-- A position out of range throws `IndexOutOfBoundsException`.
-- Deleting from an empty list throws `IllegalStateException`.
 
 ## Output
 
 ```
-[10, 20, 30, 40]; 30 at 2
-Deleted 10, 40, 30
-[20]
+*** Singly Linked List ***
+10 -> 20 -> 30 -> 40 -> null
+30 is at position 2
+Deleted head: 10
+Deleted tail: 40
+Deleted [1]:  30
+20 -> null
 Empty: true
+List is empty!
 ```
 
-The demo builds the list with `insertHead(20)`, `insertHead(10)`, `insertTail(40)` and `insert(2, 30)`. It then deletes the head (10), the tail (40) and position 1 (30), which leaves `[20]`. Finally it clears the list.
+## Questions you may be asked
 
-## What changed (simplified version)
-
-| Before | Now | Why |
-| --- | --- | --- |
-| `import java.util.NoSuchElementException;` | `IllegalStateException` | It is in `java.lang`, so no import is needed |
-| `room()` checked that `size` could not pass `Integer.MAX_VALUE` | Removed | A list will never hold 2 billion nodes in a class exercise |
-| `traverse()` copied the values into an array | Removed. `toString()` walks the nodes directly | One less step to explain |
-| `toString()` used a `StringBuilder` | Plain `String` joining with `+` | Easier to read |
-| Several statements squeezed onto one line, e.g. `room(); Node n=new Node(value); n.next=head; head=n;` | One statement per line, every `if` and loop in braces, and comments on each step | Much easier to follow |
-| The `for` loop in `search` | A `while` loop that moves `current` forward | Shows the "walk the list" pattern clearly |
+- **Array or linked list?** An array gives O(1) access by index but costs O(n) to insert in the middle. A linked list inserts in O(1) once you are at the spot, but has to walk O(n) to find a position.
+- **Why keep a `tail` pointer?** Without it, adding at the end means walking the whole list: O(n) instead of O(1).
+- **What does Java do with a deleted node?** Nothing points to it any more, so the garbage collector frees it. In C you would call `free()` yourself.
+- **What happens on an empty list?** The delete methods print `List is empty!` and return -1, the same way the team's C stack prints `Stack underflow!`.
+- **Why is `deleteTail` O(n) here but O(1) in the doubly linked list?** To remove the tail we need the node *before* it. A singly linked list can only find it by walking from the head.

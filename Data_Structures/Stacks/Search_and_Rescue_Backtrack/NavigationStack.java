@@ -2,30 +2,26 @@ import java.util.Scanner;
 
 /*
  * Project A: Search & Rescue Trail Backtrack Assistant
- * Data Structure: Stack (LIFO)
- * Underlying Structure: Linked List
- * Language: Java
+ * Data structure: Stack (LIFO), built on a linked list.
  *
- * Core LIFO operations (required by the assignment):
- *   push(), pop(), peek(), isEmpty()
+ * A rescuer moves deeper into a trail system (push). At a dead end they
+ * go back to the junction they came from (pop). The most recent junction
+ * is always the one to return to, so a stack is the right structure.
  *
- * Scenario-driven extensions (built on top of the core operations):
- *   depth()          - how many junctions deep the rescuer currently is
- *   emergencyRecall() - retreat all the way to the trailhead, reusing pop()
- *   alreadyVisited()  - read-only search through the current path, without popping
+ * Core stack operations: push, pop, peek, isEmpty
+ * Extra operations:      depth, emergencyRecall, alreadyVisited
  *
- * Note: isFull() is intentionally NOT implemented. The assignment only
- * requires isFull() for array-based structures (Section 4). Adding an
- * artificial capacity limit here would contradict the whole reason this
- * project uses a Linked List in the first place - unbounded trail depth.
+ * There is no isFull(): a linked list grows one node at a time,
+ * so the trail can be as deep as memory allows.
+ *
+ * Run: javac NavigationStack.java && java NavigationStack
  */
-
 public class NavigationStack {
 
-    /* ---------- Node definition ---------- */
+    // One junction on the trail
     static class Node {
         String junction;
-        Node next;
+        Node next;   // the junction we came from
 
         Node(String junction, Node next) {
             this.junction = junction;
@@ -33,65 +29,53 @@ public class NavigationStack {
         }
     }
 
-    /* ---------- Stack state ---------- */
-    private Node top;   // head of the linked list = the rescuer's current position
+    Node top;   // the rescuer's current position (null = at the trailhead)
 
-    public NavigationStack() {
-        this.top = null;
-    }
-
-    /* ---------- Core stack operations ---------- */
-
-    public boolean isEmpty() {
+    boolean isEmpty() {
         return top == null;
     }
 
-    /** push: step deeper into a newly discovered junction */
-    public void push(String junction) {
-        Node newNode = new Node(junction, top);
-        top = newNode;
-        System.out.println("[OK] Moved into junction \"" + junction + "\". Path recorded.");
+    // push: step deeper into a new junction
+    void push(String junction) {
+        top = new Node(junction, top);   // new node points down to the old top
+        System.out.println("Moved into junction \"" + junction + "\".");
     }
 
-    /** pop: dead end reached - retreat to the previous junction */
-    public String pop() {
+    // pop: dead end reached - go back to the previous junction
+    String pop() {
         if (isEmpty()) {
-            System.out.println("[WARNING] Already at the trailhead. No further junction to retreat to.");
+            System.out.println("Already at the trailhead. Nowhere to go back to.");
             return null;
         }
         String junction = top.junction;
-        top = top.next;   // unlink the head node
+        top = top.next;   // the junction underneath becomes the top
         return junction;
     }
 
-    /** peek: view current position without moving */
-    public String peek() {
+    // peek: see the current position without moving
+    String peek() {
         if (isEmpty()) {
-            System.out.println("[WARNING] Rescuer is at the trailhead. No active junction.");
             return null;
         }
         return top.junction;
     }
 
-    /** display: print the full explored path, deepest junction first */
-    public void display() {
+    // display: print the whole trail, newest junction first
+    void display() {
         if (isEmpty()) {
-            System.out.println("[INFO] No path explored yet. Rescuer is at the trailhead.");
+            System.out.println("No junctions yet. Rescuer is at the trailhead.");
             return;
         }
-        System.out.println("--- Explored Path (Current -> Trailhead) ---");
+        System.out.println("Trail (current -> trailhead):");
         Node current = top;
         while (current != null) {
-            System.out.println((current == top ? "[HERE] " : "       ") + current.junction);
+            System.out.println("  " + current.junction);
             current = current.next;
         }
-        System.out.println("---------------------------------------------");
     }
 
-    /* ---------- Scenario-driven extensions ---------- */
-
-    /** depth: how many junctions deep the rescuer currently is (full traversal) */
-    public int depth() {
+    // depth: how many junctions deep the rescuer is (count the nodes)
+    int depth() {
         int count = 0;
         Node current = top;
         while (current != null) {
@@ -101,23 +85,18 @@ public class NavigationStack {
         return count;
     }
 
-    /** emergencyRecall: retreat all the way to the trailhead, reusing pop() */
-    public void emergencyRecall() {
-        if (isEmpty()) {
-            System.out.println("[INFO] Already at the trailhead. Nothing to recall from.");
-            return;
-        }
-        System.out.println("[EMERGENCY RECALL] Retreating to trailhead...");
+    // emergencyRecall: go all the way back to the trailhead by popping everything
+    void emergencyRecall() {
+        System.out.println("EMERGENCY RECALL: going back to the trailhead...");
         while (!isEmpty()) {
-            String junction = pop();   // reuses the core pop() operation
-            System.out.println("   ...passed back through " + junction);
+            System.out.println("  passed back through " + pop());
         }
-        System.out.println("[EMERGENCY RECALL] Rescuer is back at the trailhead.");
+        System.out.println("Rescuer is back at the trailhead.");
     }
 
-    /** alreadyVisited: read-only search through the current path, does NOT modify top */
-    public boolean alreadyVisited(String junction) {
-        Node current = top;   // temporary pointer - top itself never moves
+    // alreadyVisited: search the trail without changing it
+    boolean alreadyVisited(String junction) {
+        Node current = top;   // a separate pointer, so top itself never moves
         while (current != null) {
             if (current.junction.equalsIgnoreCase(junction)) {
                 return true;
@@ -127,84 +106,75 @@ public class NavigationStack {
         return false;
     }
 
-    /* ---------- Menu-driven main ---------- */
-
     public static void main(String[] args) {
         NavigationStack rescue = new NavigationStack();
-        Scanner scanner = new Scanner(System.in);   // reads what the user types
+        Scanner scanner = new Scanner(System.in);
         int choice = 0;
 
-        System.out.println("=========================================");
-        System.out.println(" SEARCH & RESCUE BACKTRACK ASSISTANT (Stack)");
-        System.out.println("=========================================");
+        System.out.println("*** Search & Rescue Backtrack Assistant ***");
 
-        do {
+        while (choice != 8) {
             System.out.println("\n1. Move to a new junction (push)");
-            System.out.println("2. Dead end - retreat to previous junction (pop)");
-            System.out.println("3. View current position (peek)");
-            System.out.println("4. Display full explored path");
-            System.out.println("5. Check if back at trailhead (isEmpty)");
-            System.out.println("6. Check current depth (depth)");
-            System.out.println("7. Emergency recall - retreat to trailhead");
-            System.out.println("8. Check if a junction was already visited");
-            System.out.println("9. Exit");
-            System.out.print("Choose an option: ");
+            System.out.println("2. Dead end - go back (pop)");
+            System.out.println("3. Current position (peek)");
+            System.out.println("4. Show the whole trail");
+            System.out.println("5. How deep am I? (depth)");
+            System.out.println("6. Emergency recall");
+            System.out.println("7. Was a junction already visited?");
+            System.out.println("8. Exit");
+            System.out.print("Enter choice: ");
 
-            try {
-                choice = Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a number.");
+            if (!scanner.hasNextInt()) {   // the user typed letters, not a number
+                scanner.nextLine();
+                System.out.println("Please enter a number.");
                 continue;
             }
+            choice = scanner.nextInt();
+            scanner.nextLine();            // throw away the Enter key
 
-            switch (choice) {
-                case 1: {
-                    System.out.print("Enter junction name/ID: ");
-                    String junction = scanner.nextLine().trim();
-                    rescue.push(junction);
-                    break;
-                }
-                case 2: {
-                    String junction = rescue.pop();
-                    if (junction != null) {
-                        System.out.println("[RETREAT] Backtracked from \"" + junction + "\".");
+            if (choice == 1) {
+                System.out.print("Enter junction name: ");
+                rescue.push(scanner.nextLine());
+
+            } else if (choice == 2) {
+                String left = rescue.pop();
+                if (left != null) {
+                    System.out.println("Dead end. Left " + left + ".");
+                    if (rescue.isEmpty()) {
+                        System.out.println("Now at the trailhead.");
+                    } else {
+                        System.out.println("Now at " + rescue.peek() + ".");
                     }
-                    break;
                 }
-                case 3: {
-                    String junction = rescue.peek();
-                    if (junction != null) {
-                        System.out.println("[CURRENT] Rescuer is at: " + junction);
-                    }
-                    break;
+
+            } else if (choice == 3) {
+                if (rescue.isEmpty()) {
+                    System.out.println("At the trailhead.");
+                } else {
+                    System.out.println("Current position: " + rescue.peek());
                 }
-                case 4:
-                    rescue.display();
-                    break;
-                case 5:
-                    System.out.println("isEmpty (at trailhead): " + rescue.isEmpty());
-                    break;
-                case 6:
-                    System.out.println("[DEPTH] Rescuer is " + rescue.depth() + " junction(s) deep.");
-                    break;
-                case 7:
-                    rescue.emergencyRecall();
-                    break;
-                case 8: {
-                    System.out.print("Enter junction name to check: ");
-                    String junction = scanner.nextLine().trim();
-                    boolean visited = rescue.alreadyVisited(junction);
-                    System.out.println("[CHECK] \"" + junction + "\" already visited on this path: " + visited);
-                    break;
-                }
-                case 9:
-                    System.out.println("\nExiting Search & Rescue Backtrack Assistant. Goodbye!");
-                    break;
-                default:
-                    System.out.println("Invalid option. Please choose 1-9.");
+
+            } else if (choice == 4) {
+                rescue.display();
+
+            } else if (choice == 5) {
+                System.out.println("Depth: " + rescue.depth() + " junction(s).");
+
+            } else if (choice == 6) {
+                rescue.emergencyRecall();
+
+            } else if (choice == 7) {
+                System.out.print("Enter junction name to check: ");
+                String junction = scanner.nextLine();
+                System.out.println("Already visited: " + rescue.alreadyVisited(junction));
+
+            } else if (choice == 8) {
+                System.out.println("Exiting Search & Rescue Assistant.");
+
+            } else {
+                System.out.println("Invalid choice. Please enter 1-8.");
             }
-
-        } while (choice != 9);
+        }
 
         scanner.close();
     }

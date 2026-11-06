@@ -48,13 +48,20 @@ That is exactly the problem solved in [longest_common_prefix.c](../DC_Extra_Long
 ### `toBinary` — dotted decimal → 32 bits
 
 ```c
-void toBinary(const char *ip, char bits[33]) {
+void toBinary(char *ip, char bits[33]) {
     int part[4];
     sscanf(ip, "%d.%d.%d.%d", &part[0], &part[1], &part[2], &part[3]);
     int pos = 0;
-    for (int p = 0; p < 4; p++)
-        for (int bit = 7; bit >= 0; bit--)
-            bits[pos++] = ((part[p] >> bit) & 1) ? '1' : '0';
+    for (int p = 0; p < 4; p++) {
+        for (int bit = 7; bit >= 0; bit--) {
+            if ((part[p] >> bit) & 1) {
+                bits[pos] = '1';
+            } else {
+                bits[pos] = '0';
+            }
+            pos++;
+        }
+    }
     bits[32] = '\0';
 }
 ```
@@ -69,10 +76,13 @@ void toBinary(const char *ip, char bits[33]) {
 ```c
 for (int p = 0; p < 4; p++) {
     int number = 0;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++) {
         number = number * 2 + (bits[p * 8 + i] - '0');
+    }
     printf("%d", number);
-    if (p < 3) printf(".");
+    if (p < 3) {
+        printf(".");
+    }
 }
 ```
 
@@ -81,19 +91,26 @@ This is the reverse of `toBinary`. It reads 8 characters at a time and builds th
 ### `commonLength` and `lcp` — divide & conquer on the bit strings
 
 ```c
-int commonLength(const char *a, const char *b, int limit) {
+int commonLength(char *a, char *b, int limit) {
     int i = 0;
-    while (i < limit && a[i] == b[i]) i++;
+    while (i < limit && a[i] == b[i]) {
+        i++;
+    }
     return i;
 }
 
 int lcp(char bits[][33], int low, int high) {
-    if (low == high) return 32;                              /* BASE CASE */
-    int mid = (low + high) / 2;                              /* DIVIDE */
-    int left  = lcp(bits, low, mid);                         /* CONQUER */
+    if (low == high) {                     /* BASE CASE */
+        return 32;
+    }
+    int mid = (low + high) / 2;            /* DIVIDE */
+    int left  = lcp(bits, low, mid);       /* CONQUER */
     int right = lcp(bits, mid + 1, high);
-    int limit = (left < right) ? left : right;
-    return commonLength(bits[low], bits[mid + 1], limit);    /* COMBINE */
+    int limit = left;                      /* COMBINE */
+    if (right < limit) {
+        limit = right;
+    }
+    return commonLength(bits[low], bits[mid + 1], limit);
 }
 ```
 

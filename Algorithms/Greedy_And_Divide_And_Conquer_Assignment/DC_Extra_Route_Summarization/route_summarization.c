@@ -26,49 +26,71 @@
 #define COUNT 4
 
 /* "192.168.4.0" -> "11000000101010000000010000000000" (32 bits + '\0') */
-void toBinary(const char *ip, char bits[33]) {
+void toBinary(char *ip, char bits[33]) {
     int part[4];
     sscanf(ip, "%d.%d.%d.%d", &part[0], &part[1], &part[2], &part[3]);
     int pos = 0;
     for (int p = 0; p < 4; p++) {
         for (int bit = 7; bit >= 0; bit--) {          /* 8 bits per part */
-            bits[pos++] = ((part[p] >> bit) & 1) ? '1' : '0';
+            /* (number >> bit) & 1 reads one bit of the number: 1 or 0 */
+            if ((part[p] >> bit) & 1) {
+                bits[pos] = '1';
+            } else {
+                bits[pos] = '0';
+            }
+            pos++;
         }
     }
     bits[32] = '\0';
 }
 
 /* 32 bits -> prints like 192.168.4.0 */
-void printDotted(const char bits[33]) {
+void printDotted(char bits[33]) {
     for (int p = 0; p < 4; p++) {
         int number = 0;
         for (int i = 0; i < 8; i++) {
             number = number * 2 + (bits[p * 8 + i] - '0');
         }
         printf("%d", number);
-        if (p < 3) printf(".");
+        if (p < 3) {
+            printf(".");
+        }
     }
 }
 
 /* COMBINE step: how many starting bits do a and b share (up to limit)? */
-int commonLength(const char *a, const char *b, int limit) {
+int commonLength(char *a, char *b, int limit) {
     int i = 0;
-    while (i < limit && a[i] == b[i]) i++;
+    while (i < limit && a[i] == b[i]) {
+        i++;
+    }
     return i;
 }
 
 /* Divide & Conquer: length of the common prefix of bits[low..high] */
 int lcp(char bits[][33], int low, int high) {
-    if (low == high) return 32;                                 /* BASE CASE */
-    int mid = (low + high) / 2;                                 /* DIVIDE    */
-    int left  = lcp(bits, low, mid);                            /* CONQUER   */
+    /* BASE CASE: one address -> all 32 bits */
+    if (low == high) {
+        return 32;
+    }
+
+    /* DIVIDE */
+    int mid = (low + high) / 2;
+
+    /* CONQUER */
+    int left  = lcp(bits, low, mid);
     int right = lcp(bits, mid + 1, high);
-    int limit = (left < right) ? left : right;
-    return commonLength(bits[low], bits[mid + 1], limit);       /* COMBINE   */
+
+    /* COMBINE: compare one address from each half, up to the shorter length */
+    int limit = left;
+    if (right < limit) {
+        limit = right;
+    }
+    return commonLength(bits[low], bits[mid + 1], limit);
 }
 
-int main(void) {
-    const char *ips[COUNT] = {"192.168.4.0", "192.168.5.0", "192.168.6.0", "192.168.7.0"};
+int main() {
+    char *ips[COUNT] = {"192.168.4.0", "192.168.5.0", "192.168.6.0", "192.168.7.0"};
     char bits[COUNT][33];
 
     /* Step 1: convert every address to 32 bits */
@@ -84,10 +106,15 @@ int main(void) {
     /* Step 3: keep the common bits, fill the rest with zeros */
     char network[33];
     for (int i = 0; i < 32; i++) {
-        network[i] = (i < prefixLength) ? bits[0][i] : '0';
+        if (i < prefixLength) {
+            network[i] = bits[0][i];   /* keep the shared bits */
+        } else {
+            network[i] = '0';          /* fill the rest with zeros */
+        }
     }
     network[32] = '\0';
 
+    /* %.*s prints only the first prefixLength characters */
     printf("\nCommon prefix: %.*s  (%d bits)\n", prefixLength, bits[0], prefixLength);
     printf("Summary route: ");
     printDotted(network);

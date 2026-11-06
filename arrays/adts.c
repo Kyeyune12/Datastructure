@@ -3,6 +3,10 @@
 
 #define MAX 5
 
+// A fixed-size stack (LIFO) stored in an array. top = index of the top item, -1 = empty.
+// Build: gcc adts.c -o adts
+// Run:   ./adts
+
 struct Stack{
     int arr[MAX];
     int top;
@@ -35,7 +39,7 @@ bool isStackEmpty (struct Stack* s){
     return s->top == -1;
 }
 
-void main(){
+int main(){
     printf("***Welcome to ADTS***");
 
     struct Stack s;
@@ -47,4 +51,5 @@ void main(){
     printf("Popped: %d\n", pop(&s));
     printf("\ntop item (Peek): %d\n", peekStack(&s));
 
+    return 0;
 }

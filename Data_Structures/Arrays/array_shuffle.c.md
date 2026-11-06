@@ -1,13 +1,13 @@
 # array_shuffle.c
 
-The **Fisher–Yates** shuffle in C. Using only the standard `rand()`, it shuffles an array so that every ordering is equally likely, and it avoids modulo bias.
+The **Fisher-Yates shuffle** in C: puts an array into a random order where every possible order is equally likely. Same idea as [ArrayShuffle.java](ArrayShuffle.java.md).
 
-**Language:** C11 · **Java version:** [ArrayShuffle.java](ArrayShuffle.java.md) · **Proof of correctness:** section 6 of [MatrixMergeAnalysis.md](MatrixMergeAnalysis.md)
+**Proof of correctness:** section 6 of [MatrixMergeAnalysis.md](MatrixMergeAnalysis.md)
 
 ## How to run
 
 ```sh
-gcc -std=c11 -Wall -Wextra -Wpedantic -Werror array_shuffle.c -o shuffle
+gcc array_shuffle.c -o shuffle
 ./shuffle
 ```
 
@@ -15,52 +15,43 @@ gcc -std=c11 -Wall -Wextra -Wpedantic -Werror array_shuffle.c -o shuffle
 
 | Function | What it does |
 | --- | --- |
-| `uniform_below(bound)` *(static)* | Returns a random whole number in `[0, bound)` with every value equally likely, using rejection sampling |
-| `shuffleInPlace(arr, n)` | Shuffles `arr` in place. Returns `false` if `arr` is `NULL` (with n > 0) or `n` is too big |
-| `main` | Calls `srand(42)` **once**, shuffles `{1, 2, 3, 4, 5, 6}` and prints the result |
-
-## Why rejection sampling?
-
-`rand()` returns a number from 0 to `RAND_MAX`. To get a number below `bound`, people often write `rand() % bound`. Unless `RAND_MAX + 1` divides exactly by `bound`, that makes some results slightly more likely than others (*modulo bias*).
-
-`uniform_below` works round this:
-
-```c
-limit = range - range % bound;          // largest multiple of bound that fits
-do { r = rand(); } while (r >= limit);  // throw away the uneven top end
-return r % bound;                       // now every value is equally likely
-```
+| `shuffle(arr, n)` | Shuffles `arr` in place |
+| `printArray(arr, n)` | Prints the values on one line |
+| `main` | Seeds the random numbers once with `srand(42)`, then shuffles `{1, 2, 3, 4, 5, 6}` and prints before and after |
 
 ## The shuffle loop
 
 ```c
-for (remaining = n; remaining > 1; --remaining) {
-    i = remaining - 1;
-    j = uniform_below(remaining);    // uniform in [0, i]
-    swap(arr[i], arr[j]);
+for (int i = n - 1; i > 0; i--) {
+    int j = rand() % (i + 1);   // random index from 0 to i
+
+    int temp = arr[i];          // swap arr[i] and arr[j]
+    arr[i] = arr[j];
+    arr[j] = temp;
 }
 ```
 
-This is the same as the Java version: fill the array from the back, each time picking one of the elements not yet placed.
+Work from the back. Position i is filled with a random element from the part not yet fixed (indexes 0..i). After that swap, position i is final and the loop moves left.
 
 ## Output
 
-On Linux with glibc:
+On Linux (glibc):
 
 ```
-4 3 5 2 6 1
+Before: 1 2 3 4 5 6
+After:  4 3 5 2 6 1
 ```
 
-The result **depends on your C library**. The C standard doesn't say which numbers `rand()` produces, so Windows (MinGW/MSVC) or macOS will print a different order for the same seed. The shuffle is still correct on every platform.
+A different C library (Windows, macOS) produces a different order for the same seed. The shuffle is still correct.
 
 ## Complexity
 
-- **Swaps:** exactly n − 1.
-- **Time:** *expected* Θ(n). Because rejection sampling can retry, there is no fixed worst-case limit, but retries are rare: each draw is rejected with probability below ½.
-- **Extra space:** O(1).
+- **Time O(n)**: exactly n - 1 swaps.
+- **Extra space O(1)**: the shuffle happens inside the same array.
 
-## Notes
+## Questions you may be asked
 
-- Call `srand` **once** at the start of the program. Calling it before every shuffle with the same seed makes every shuffle produce the same order.
-- `n` must be at most `RAND_MAX + 1`. Otherwise `rand()` can't produce every index needed, and the function returns `false`.
-- `rand()` is not cryptographically secure, and rejection sampling can't fix a weak generator. It only removes the modulo bias.
+- **Why seed with `srand` only once?** Seeding again before every shuffle with the same number gives the same "random" order every time.
+- **Why `% (i + 1)` and not `% n`?** Picking from the whole array every time (the "naive shuffle") makes some orders more likely than others. Picking only from 0..i gives each of the n! orders the same chance.
+- **Is `rand() % (i + 1)` perfectly fair?** Very nearly. `RAND_MAX` is huge compared with 6, so the tiny "modulo bias" can't be seen here. For cards in a real casino you would use a cryptographic random generator.
+- **Where is this used?** Shuffling a playlist, dealing cards in a game, randomising exam questions.

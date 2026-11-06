@@ -1,7 +1,6 @@
-/**
- * javac SinglyLinkedList.java && java SinglyLinkedList
- *
- * A singly linked list: each node holds a value and a link to the NEXT node.
+/*
+ * Singly Linked List
+ * Each node holds a value and a link to the NEXT node.
  *
  *   head --> [10] --> [20] --> [30] --> null
  *                               ^
@@ -9,11 +8,13 @@
  *
  * We keep both head (first node) and tail (last node).
  * Insert at head/tail and delete head are O(1); everything else is O(n).
+ *
+ * Run: javac SinglyLinkedList.java && java SinglyLinkedList
  */
 public class SinglyLinkedList {
 
     // One box in the chain
-    private static class Node {
+    static class Node {
         int value;
         Node next;   // the node after this one (null if this is the last node)
 
@@ -22,24 +23,16 @@ public class SinglyLinkedList {
         }
     }
 
-    private Node head;   // first node
-    private Node tail;   // last node
-    private int size;    // number of nodes
+    Node head;   // first node
+    Node tail;   // last node
+    int size;    // number of nodes
 
-    public int size() {
-        return size;
-    }
-
-    public boolean isEmpty() {
-        return size == 0;
+    boolean isEmpty() {
+        return head == null;
     }
 
     // Walks from the head to the node at the given position
-    private Node nodeAt(int index) {
-        if (index < 0 || index >= size) {
-            throw new IndexOutOfBoundsException("index " + index);
-        }
-
+    Node nodeAt(int index) {
         Node current = head;
         for (int i = 0; i < index; i++) {
             current = current.next;
@@ -48,7 +41,7 @@ public class SinglyLinkedList {
     }
 
     // Adds a value at the front of the list
-    public void insertHead(int value) {
+    void insertHead(int value) {
         Node newNode = new Node(value);
         newNode.next = head;   // new node points to the old first node
         head = newNode;        // new node becomes the first node
@@ -60,7 +53,7 @@ public class SinglyLinkedList {
     }
 
     // Adds a value at the end of the list
-    public void insertTail(int value) {
+    void insertTail(int value) {
         Node newNode = new Node(value);
 
         if (tail == null) {
@@ -73,9 +66,10 @@ public class SinglyLinkedList {
     }
 
     // Adds a value at a position (0 = front, size = end)
-    public void insert(int index, int value) {
+    void insert(int index, int value) {
         if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException("index " + index);
+            System.out.println("Invalid position " + index);
+            return;
         }
         if (index == 0) {
             insertHead(value);
@@ -94,10 +88,11 @@ public class SinglyLinkedList {
         size++;
     }
 
-    // Removes and returns the first value
-    public int deleteHead() {
+    // Removes and returns the first value (-1 if the list is empty)
+    int deleteHead() {
         if (isEmpty()) {
-            throw new IllegalStateException("empty list");
+            System.out.println("List is empty!");
+            return -1;
         }
 
         int value = head.value;
@@ -110,10 +105,11 @@ public class SinglyLinkedList {
         return value;
     }
 
-    // Removes and returns the last value
-    public int deleteTail() {
+    // Removes and returns the last value (-1 if the list is empty)
+    int deleteTail() {
         if (isEmpty()) {
-            throw new IllegalStateException("empty list");
+            System.out.println("List is empty!");
+            return -1;
         }
         if (size == 1) {
             return deleteHead();
@@ -128,10 +124,11 @@ public class SinglyLinkedList {
         return value;
     }
 
-    // Removes and returns the value at a position
-    public int delete(int index) {
+    // Removes and returns the value at a position (-1 if the position is invalid)
+    int delete(int index) {
         if (index < 0 || index >= size) {
-            throw new IndexOutOfBoundsException("index " + index);
+            System.out.println("Invalid position " + index);
+            return -1;
         }
         if (index == 0) {
             return deleteHead();
@@ -147,12 +144,8 @@ public class SinglyLinkedList {
         return value;
     }
 
-    public int get(int index) {
-        return nodeAt(index).value;
-    }
-
     // Returns the position of the value, or -1 if it is not in the list
-    public int search(int value) {
+    int search(int value) {
         Node current = head;
         int index = 0;
 
@@ -166,45 +159,34 @@ public class SinglyLinkedList {
         return -1;
     }
 
-    // Empties the list
-    public void clear() {
-        head = null;
-        tail = null;
-        size = 0;
-    }
-
-    // Shows the list like [10, 20, 30]
-    @Override
-    public String toString() {
-        String text = "[";
+    // Prints the list from head to tail, like 10 -> 20 -> 30 -> null
+    void display() {
         Node current = head;
-
         while (current != null) {
-            text += current.value;
-            if (current.next != null) {
-                text += ", ";
-            }
+            System.out.print(current.value + " -> ");
             current = current.next;
         }
-        return text + "]";
+        System.out.println("null");
     }
 
     public static void main(String[] args) {
+        System.out.println("*** Singly Linked List ***");
         SinglyLinkedList list = new SinglyLinkedList();
 
-        list.insertHead(20);     // [20]
-        list.insertHead(10);     // [10, 20]
-        list.insertTail(40);     // [10, 20, 40]
-        list.insert(2, 30);      // [10, 20, 30, 40]
-        System.out.println(list + "; 30 at " + list.search(30));
+        list.insertHead(20);     // 20
+        list.insertHead(10);     // 10 20
+        list.insertTail(40);     // 10 20 40
+        list.insert(2, 30);      // 10 20 30 40
+        list.display();
+        System.out.println("30 is at position " + list.search(30));
 
-        int a = list.deleteHead();   // removes 10
-        int b = list.deleteTail();   // removes 40
-        int c = list.delete(1);      // removes 30
-        System.out.println("Deleted " + a + ", " + b + ", " + c);
-        System.out.println(list);
+        System.out.println("Deleted head: " + list.deleteHead());   // 10
+        System.out.println("Deleted tail: " + list.deleteTail());   // 40
+        System.out.println("Deleted [1]:  " + list.delete(1));      // 30
+        list.display();
 
-        list.clear();
+        list.deleteHead();                                          // 20
         System.out.println("Empty: " + list.isEmpty());
+        list.deleteHead();                                          // prints "List is empty!"
     }
 }

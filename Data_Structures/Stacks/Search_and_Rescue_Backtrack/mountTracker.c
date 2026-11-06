@@ -5,6 +5,13 @@
 
 #define NAME_LEN 30
 
+// Project A: Search & Rescue Trail Backtrack Assistant
+// Data structure: Stack (LIFO), built on a linked list.
+// push = move deeper to a new junction, pop = dead end, go back one junction.
+//
+// Build: gcc mountTracker.c -o mountTracker
+// Run:   ./mountTracker
+
 struct Node {
     char junctionName[NAME_LEN];
     struct Node* next;
@@ -79,11 +86,15 @@ int main() {
         printf("3. View current position / trail so far\n");
         printf("4. Exit\n");
         printf("Enter choice: ");
-        scanf("%d", &choice);
+        if (scanf("%d", &choice) != 1) {
+            printf("Please enter a number.\n");
+            while (getchar() != '\n');   // clear the bad input
+            continue;
+        }
 
         if (choice == 1) {
             printf("Enter junction name: ");
-            scanf("%s", junctionName);
+            scanf("%29s", junctionName);   // at most 29 letters + the '\0'
             push(&s, junctionName);
 
         } else if (choice == 2) {
@@ -102,6 +113,9 @@ int main() {
             printTrail(&s);
 
         } else if (choice == 4) {
+            while (!isStackEmpty(&s)) {   // free every node before leaving
+                pop(&s);
+            }
             printf("Exiting Search & Rescue Assistant.\n");
             break;
 

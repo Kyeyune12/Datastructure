@@ -1,0 +1,9 @@
+# compiled programs and IDE build output - never commit these
+*.o
+*.exe
+*.class
+a.out
+bin/
+obj/
+*.depend
+*.layout

@@ -1,68 +1,57 @@
 # general_graph.c
 
-**Part A, Question 2, in C.** Shortest paths when the vertices are *not* in stage order: sort them topologically first, and if the graph has a cycle, use Bellman-Ford (which also detects negative cycles). Its output is identical to [GeneralGraph.java](GeneralGraph.java.md).
+**Part A, Question 2, in C.** What if BCOST(l) is **not** ready when BCOST(j) is computed (the vertices are not numbered in stage order)? Same algorithm and same output as [GeneralGraph.java](GeneralGraph.java.md).
 
-**Language:** C · **Java version:** [GeneralGraph.java](GeneralGraph.java.md) · **Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
+**Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
 
 ## How to run
 
 ```sh
-gcc -O2 -o general_graph general_graph.c
+gcc general_graph.c -o general_graph
 ./general_graph
 ```
 
-## The idea
+## The re-design
 
-1. **The Q1 loop assumes numbered order is stage order.** Rename the vertices and BCOST(l) may still be ∞ when BCOST(j) needs it.
-2. **Fix for a DAG (no cycles):** order the vertices topologically with Kahn's algorithm, then run the same recurrence in that order.
-3. **Fix for a graph with a cycle:** no ordering exists, so use **Bellman-Ford**. Relax every edge n − 1 times, then do one more pass; if anything still improves, a **negative cycle** is reachable.
+1. **Topological sort** (Kahn's algorithm, `topoSort`): repeatedly take a vertex with no incoming edges. This produces an order where every edge goes forward.
+2. If all N vertices were placed, the graph is a **DAG**: run the same BCOST rule as Q1, but in topological order.
+3. If some vertices were never placed, there is a **cycle**: fall back to **Bellman-Ford** (relax every edge N - 1 times), then do one extra pass. If anything still improves, there is a **negative cycle**.
 
-## How the code is organised
+## What is inside
 
-| Part | Purpose |
+| Function | What it does |
 | --- | --- |
-| `MAXN 32`, `MAXE 128`, `INF 1000000000` | Fixed limits and "infinity" |
-| `Edge { u, v, w }`, `base[]` | The 21 lecture edges |
-| `enum { OK, NO_PATH, NEG_CYCLE }` | Return codes from `shortestPath` |
-| `topoSort(n, e, m, order)` | Kahn's algorithm with an array used as a queue. Returns how many vertices it placed; fewer than n means there is a cycle |
-| `shortestPath(n, e, m, s, t, &cost, path, &len, &method)` | The redesigned algorithm. Sets `method` to a description of the approach it used |
-| `naiveBcost(...)` | The unchanged Q1 loop, for comparison |
-| `report(...)` | Prints the method and the result |
-| `main` | Runs demos A (renamed vertices), B (positive cycle) and C (negative cycle) |
+| `topoSort(e, m, order)` | Kahn's algorithm with a simple array queue. Returns how many vertices it placed (less than N means a cycle) |
+| `shortestPath(e, m, s, t)` | Picks the method, runs it and **prints** the method and the result |
+| `naiveBcost(e, m, s, t)` | The unchanged Q1 loop, used to show it gives the wrong answer on a relabelled graph |
+| `main` | Runs the three demos A, B and C |
 
-## Output
+## The three demos
 
-```
-A) Relabelled slide-20 graph (source is now 7, target is now 6)
-  Naive Q1 loop:  INF  (WRONG - predecessors not ready)
-  Re-designed algorithm:
-  Method: DAG -> BCOST in topological order
-  Shortest 7 -> 6 = 16   Path: 7 -> 12 -> 2 -> 4 -> 6
-
-B) Original graph + edge 10->7 (cost 1)  [cycle 7->10->7]
-  Method: cycle found -> Bellman-Ford
-  Shortest 1 -> 12 = 16   Path: 1 -> 3 -> 6 -> 10 -> 12
-
-C) Original graph + edge 10->7 (cost -6) [cycle weight -3]
-  Method: cycle found -> Bellman-Ford
-  Result: NEGATIVE CYCLE reachable - shortest path undefined
-```
-
-See [GeneralGraph.java.md](GeneralGraph.java.md#the-three-demos-and-their-output) for what each demo shows.
+| Demo | Graph | Result |
+| --- | --- | --- |
+| A | Slide-20 graph with the vertex numbers shuffled | Naive Q1 loop prints INF (wrong). The re-design gives 16 |
+| B | Original graph + edge 10 -> 7 (cost 1): a cycle 7 -> 10 -> 7 | Topological sort fails, Bellman-Ford gives 16 |
+| C | Same, but the extra edge costs -6: cycle weight 3 - 6 = -3 | Bellman-Ford reports a negative cycle |
 
 ## Complexity
 
-This version stores only a flat edge list; it doesn't build adjacency lists. So:
+- Topological sort: O(n · e) as written (it scans the edge list for each vertex taken from the queue). Θ(n + e) with adjacency lists.
+- DAG case: O(n · e) as written, Θ(n + e) with lists.
+- Bellman-Ford: **Θ(n · e)**, since it does n - 1 passes over all e edges.
 
-| Step | This C version | With adjacency lists (as in the Java version) |
-| --- | --- | --- |
-| `topoSort` | **O(n · e)**: every removed vertex scans all edges | O(n + e) |
-| BCOST in topological order | **O(n · e)**: scans all edges to find those into j | O(n + e) |
-| Bellman-Ford | O(n · e) | O(n · e) |
+## How the C file is written
 
-For a 12-vertex graph the difference is negligible. To match the Java version, build per-vertex lists of outgoing and incoming edges as [bcost.c](../PartA_Q1_Backward_BCOST/bcost.c.md) does.
+Same team style as every C file in this repo:
 
-## C-specific notes
+- `#define` for sizes (`N`, `E`, `INF`) and `struct Edge { int from; int to; int cost; }` for one edge.
+- The graph is one global array `edges[]`; the result tables are global arrays, indexed from 1 so they match the lecture (index 0 is unused).
+- Every `if` and loop has braces, with one statement per line, so each step can be pointed at during the presentation.
+- `INF` is 1,000,000. That is far bigger than any real path cost here, and `INF + cost` still fits in an `int`.
 
-- `main` reuses one `Edge g[MAXE]` array for all three demos. B and C add the extra edge at position `g[BASE_E]`.
-- The function reports which method it used by setting a `const char *` through a pointer (`const char **method`).
+## Questions you may be asked
+
+- **How does Kahn's algorithm detect a cycle?** Vertices on a cycle always keep at least one incoming edge, so they never reach in-degree 0 and are never placed. `count < N` means there is a cycle.
+- **Why N - 1 passes in Bellman-Ford?** A shortest path without a cycle has at most N - 1 edges, and each pass fixes at least one more edge of it.
+- **Why can the extra pass detect a negative cycle?** After N - 1 passes all true shortest distances are final. If an edge can still lower a distance, going round a cycle keeps making it cheaper, so the cycle must be negative.
+- **Why not always use Bellman-Ford?** It is slower. On a DAG the topological-order method does each edge once.

@@ -140,12 +140,16 @@ Exiting Search & Rescue Assistant.
 | `printTrail` | O(n) | O(1) extra |
 | Whole stack | – | O(n) for n junctions |
 
-## Known weaknesses (worth fixing before submission)
+## Input safety (fixed)
 
-1. **Typing a letter at the menu loops forever.** If `scanf("%d", &choice)` fails, the bad text stays in the input buffer and is read again on every pass. The queue program already handles this. Check `scanf`'s return value and clear the line:
+1. **Typing a letter at the menu** used to loop forever. Now `scanf`'s return value is checked and the bad line is cleared, the same way the queue program does it:
    ```c
-   if (scanf("%d", &choice) != 1) { while (getchar() != '\n'); printf("Invalid input.\n"); continue; }
+   if (scanf("%d", &choice) != 1) {
+       printf("Please enter a number.\n");
+       while (getchar() != '\n');   // clear the bad input
+       continue;
+   }
    ```
-2. **Long names can overflow the buffer.** `scanf("%s", junctionName)` has no length limit, but the buffer holds 30 bytes. Use `scanf("%29s", junctionName)`.
-3. **Names can't contain spaces.** `%s` stops at the first space, so "Old Bridge" would be read as two inputs.
-4. **Memory isn't freed on exit.** Choosing 4 while junctions remain leaves their nodes allocated. The OS reclaims them when the program ends, but a short loop calling `pop` before `break` would be cleaner, and it's what a marker checking `malloc`/`free` pairs would expect.
+2. **Long names** can no longer overflow the 30-byte buffer: `scanf("%29s", junctionName)` reads at most 29 characters plus the `'\0'`.
+3. **Memory is freed on exit:** choosing 4 pops every remaining junction first, so every `malloc` has a matching `free`.
+4. **Still true:** names can't contain spaces, because `%s` stops at the first space ("Old Bridge" is read as two inputs). The Java version reads whole lines, so it allows spaces.

@@ -38,8 +38,8 @@ current length + 1 (the space) + word length ≤ WIDTH
 ```c
 #define WIDTH 20
 
-void printLine(const char *line) { printf("|%-*s|\n", WIDTH, line); }
-void printBorder(void) { /* prints |--------------------| */ }
+void printLine(char *line) { printf("|%-*s|\n", WIDTH, line); }
+void printBorder() { /* prints |--------------------| */ }
 ```
 
 `%-*s` means "left-align the string, padded with spaces to a width given as an argument". The `*` takes its value from the `WIDTH` argument. So every line is padded to exactly 20 characters between the `|` bars, which makes the width limit visible in the output.
@@ -47,7 +47,7 @@ void printBorder(void) { /* prints |--------------------| */ }
 ### The words and the line buffer
 
 ```c
-const char *words[] = { "Greedy", "algorithms", "make", ... "it" };
+char *words[] = { "Greedy", "algorithms", "make", ... "it" };
 int n = sizeof(words) / sizeof(words[0]);   /* 16 words */
 char line[200] = "";                          /* the line being filled */
 ```

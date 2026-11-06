@@ -1,57 +1,54 @@
 # negative_weights.c
 
-**Part B, Question 2, in C.** Floyd–Warshall with **negative edge weights**. It shows Dijkstra failing, Floyd giving correct answers when there is no negative cycle, and a negative cycle being detected through the diagonal. Its output is identical to [NegativeWeights.java](NegativeWeights.java.md).
+**Part B, Question 2, in C.** All-pairs shortest paths when some edges have **negative** weights. Same algorithm and same output as [NegativeWeights.java](NegativeWeights.java.md).
 
-**Language:** C · **Java version:** [NegativeWeights.java](NegativeWeights.java.md) · **Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
+**Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
 
 ## How to run
 
 ```sh
-gcc -O2 -o negative_weights negative_weights.c
+gcc negative_weights.c -o negative_weights
 ./negative_weights
 ```
 
-## Key facts
+## The key facts
 
-- Negative edges are fine for Floyd–Warshall. **Negative cycles** are not: they make shortest paths undefined.
-- After the run, **A(i, i) < 0** means vertex i is on a negative cycle.
-- Dijkstra is greedy and never revisits a vertex it has finished, so a negative edge found later can make its answer wrong.
+- **Floyd-Warshall still works** with negative edges, as long as there is no **negative cycle**.
+- A negative cycle shows up after the algorithm as a **negative number on the diagonal**: A(i, i) < 0 means i is on (or can reach) a negative cycle.
+- **Dijkstra can fail**: it is greedy and fixes a vertex's distance forever once chosen, but a negative edge found later could still make it cheaper.
 
-## How the code is organised
+## What is inside
 
-| Part | Purpose |
+| Function | What it does |
 | --- | --- |
-| `#define MAXN 8`, `INF 1000000000` | Room for up to 7 vertices, and "infinity" |
-| `A[][]`, `nxt[][]`, `init(n)`, `addEdge` | Global matrices, reset with `init` before each demo |
-| `int floyd(int n)` | The triple loop. Returns 1 if any `A[i][i] < 0` |
-| `printMatrix(n)`, `printPath(i, j)` | Output helpers |
-| `dijkstra(n, s, t, w)` | O(n²) Dijkstra on its own weight matrix `w` |
-| `main` | Demo 1 (Dijkstra against Floyd), demo 2 (a 5-vertex graph with negative edges), demo 3 (a negative cycle) |
+| `init`, `addEdge`, `printMatrix`, `printPath` | Same as in [floyd.c](../PartB_Q1_All_Pairs_Floyd/floyd.c.md) |
+| `floyd()` | The triple loop, then returns 1 if any `A[i][i] < 0` |
+| `dijkstra(size, s, t, w)` | Plain O(n²) Dijkstra, to show it gets the wrong answer |
 
-## Output
+## The three demos
 
-```
-===== 1) Dijkstra fails with a negative edge =====
-  Dijkstra   dist(1 -> 2) = 2   (WRONG)
-  Floyd      dist(1 -> 2) = 1   (correct: 1 -> 3 -> 2)
-
-===== 2) Floyd-Warshall with negative edges, no negative cycle =====
-Negative cycle? NO
-  1 -> 3 : cost  -3   path 1 -> 5 -> 4 -> 3
-
-===== 3) Negative cycle detection =====
-Negative cycle? YES
-Vertices on / reaching a negative cycle (A(i,i) < 0): 1 2 3
-```
-
-The full matrices are in [output.txt](output.txt). [NegativeWeights.java.md](NegativeWeights.java.md#output) explains each demo step by step.
+| Demo | Result |
+| --- | --- |
+| 1) Edges 1->2 (2), 1->3 (5), 3->2 (-4) | Dijkstra says dist(1, 2) = 2 (**wrong**). Floyd says 1 (correct, via 1 -> 3 -> 2) |
+| 2) 5-vertex graph with negative edges, no negative cycle | Full correct matrix, `Negative cycle? NO` |
+| 3) Cycle 1 -> 2 -> 3 -> 1 with total weight -2 | Diagonal goes negative, `Negative cycle? YES`, vertices 1 2 3 listed |
 
 ## Complexity
 
-- **Floyd:** Θ(n³) time, Θ(n²) space.
-- **Dijkstra here:** O(n²).
+- Floyd: **Θ(n³)** time, Θ(n²) space. The diagonal check adds Θ(n).
+- Dijkstra (matrix version): Θ(n²).
 
-## Notes
+## How the C file is written
 
-- **When a negative cycle exists, the printed numbers for affected pairs are not real distances.** For example, 1 → 4 shows −1, but it is really unbounded below, because the cycle 1 → 2 → 3 → 1 can be repeated before taking 3 → 4. A pair (i, j) is undefined whenever i can reach the cycle and the cycle can reach j.
-- `MAXN` is 8, so these demos are limited to 7 vertices. Raise it for bigger graphs.
+Same team style as every C file in this repo:
+
+- `#define` for sizes (`N`, `E`, `INF`) and `struct Edge { int from; int to; int cost; }` for one edge.
+- The graph is one global array `edges[]`; the result tables are global arrays, indexed from 1 so they match the lecture (index 0 is unused).
+- Every `if` and loop has braces, with one statement per line, so each step can be pointed at during the presentation.
+- `INF` is 1,000,000. That is far bigger than any real path cost here, and `INF + cost` still fits in an `int`.
+
+## Questions you may be asked
+
+- **Why does Dijkstra fail in demo 1?** It finalises vertex 2 with distance 2 before it looks at vertex 3. The edge 3 -> 2 (-4) would make it 1, but vertex 2 is already "done".
+- **Why is a shortest path undefined with a negative cycle?** You can go round the cycle again and again, and each lap makes the total smaller, without limit.
+- **Real example?** Currency exchange: if converting round a loop of currencies leaves you with more money than you started with, that is a negative cycle (an arbitrage opportunity).

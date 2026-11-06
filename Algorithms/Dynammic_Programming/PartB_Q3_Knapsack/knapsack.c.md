@@ -1,63 +1,65 @@
 # knapsack.c
 
-**Part B, Question 3, in C.** The **0/1 knapsack** problem by dynamic programming: it builds the V[i][c] table, finds which items were taken, and checks each answer with brute force. Its output is identical to [Knapsack.java](Knapsack.java.md).
+**Part B, Question 3, in C.** **0/1 knapsack** with dynamic programming: each item is taken whole or left behind. Same algorithm and same output as [Knapsack.java](Knapsack.java.md).
 
-**Language:** C · **Java version:** [Knapsack.java](Knapsack.java.md) · **Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
+**Written answer:** [answer.md](answer.md) · **Saved output:** [output.txt](output.txt)
 
 ## How to run
 
 ```sh
-gcc -O2 -o knapsack knapsack.c
+gcc knapsack.c -o knapsack
 ./knapsack
 ```
 
-## The recurrence
+## The rule
 
 ```
+V[i][c] = best profit using only items 1..i with capacity c
+
 V[0][c] = 0
-V[i][c] = V[i-1][c]                                if w_i > c
-        = max( V[i-1][c],  p_i + V[i-1][c - w_i] ) otherwise
+V[i][c] = V[i-1][c]                                 if w_i > c   (doesn't fit)
+        = max( V[i-1][c],  p_i + V[i-1][c - w_i] )  otherwise   (skip it, or take it)
 ```
 
-The answer is V[n][m]. To find the chosen items, work back from V[n][m]: if V[i][c] ≠ V[i−1][c], item i was taken, so c −= wᵢ. [Knapsack.java.md](Knapsack.java.md#the-recurrence) explains this in full.
+The answer is V[n][m]. To find **which** items were taken, walk back from V[n][m]: if V[i][c] differs from V[i-1][c], item i was taken, so subtract its weight and continue.
 
-## How the code is organised
+## What is inside
 
-| Part | Purpose |
+| Function | What it does |
 | --- | --- |
-| `#define MAXN 10`, `MAXW 64` | The largest number of items and the largest capacity |
-| `int V[MAXN+1][MAXW+1];` | The global DP table |
-| `knapsack(n, m, w, p, take, showTable)` | Fills V, optionally prints it, works back to fill `take[]`, and returns V[n][m] |
-| `bruteForce(n, m, w, p)` | Tries all 2ⁿ subsets with a bitmask |
-| `solve(title, n, m, w, p, showTable)` | Prints the problem and the results, and compares them with brute force |
-| `main` | Three examples. Arrays are **1-based**, with index 0 unused, to match the lecture notes |
+| `knapsack(n, m, w, p, take)` | Fills the table `V`, walks back to fill `take[]`, returns the best profit |
+| `printTable(n, m)` | Prints `V` |
+| `bruteForce(n, m, w, p)` | Tries all 2^n subsets (each bit of `mask` = one item) to double-check the DP |
+| `solve(...)` | Prints one example: items, table, best profit, items taken, weight used, brute-force check |
 
-## Output
+The arrays `w[]` and `p[]` start at index 1, like the notes; index 0 is unused.
 
-```
-===== Example 1 (n = 3, m = 6) =====
-DP table V[i][c]:
-  i\c    0   1   2   3   4   5   6
-    0    0   0   0   0   0   0   0
-    1    0   0   1   1   1   1   1
-    2    0   0   1   2   2   3   3
-    3    0   0   1   2   5   5   6
+## Results
 
-Maximum profit = 6
-Items taken (x_i): (1, 0, 1)
-Total weight used = 6 of 6
-Brute-force check = 6 -> OK
-```
+| Example | Best profit | Items taken |
+| --- | --- | --- |
+| n = 3, m = 6, w = (2, 3, 4), p = (1, 2, 5) | **6** | (1, 0, 1) |
+| n = 4, m = 8, w = (2, 3, 4, 5), p = (1, 2, 5, 6) | **8** | (0, 1, 0, 1) |
+| n = 3, m = 50, w = (10, 20, 30), p = (60, 100, 120) | **220** | (0, 1, 1) |
 
-The other examples give profit **8** with x = (0, 1, 0, 1), and profit **220** with x = (0, 1, 1). Both are confirmed `OK` by brute force. See [output.txt](output.txt).
+Every example prints `Brute-force check ... OK`.
 
 ## Complexity
 
-- **Θ(n · m)** time and space. This is pseudo-polynomial, because it depends on the size of m.
-- **Brute force:** Θ(2ⁿ · n).
+- **Time Θ(n · m)**: one table cell per item and capacity.
+- **Space Θ(n · m)** for the table.
+- Brute force is Θ(2^n · n), which is why DP is used.
 
-## C-specific notes
+## How the C file is written
 
-- **Fixed limits:** n ≤ 10 and m ≤ 64, because the table is a static global array. Example 3 (m = 50) fits. A bigger capacity needs a larger `MAXW`, or a table allocated with `malloc`.
-- `solve` calls `bruteForce` twice, once to print it and once to compare. This is harmless, but storing the result in a variable would avoid the repeated work.
-- `take[]` is set from the comparison directly: `take[i] = (V[i][c] != V[i-1][c]);`.
+Same team style as every C file in this repo:
+
+- `#define` for sizes (`MAXN`, `MAXW`).
+- The table `V` is a global 2D array; `w[]` and `p[]` are indexed from 1 so they match the lecture.
+- Every `if` and loop has braces, with one statement per line, so each step can be pointed at during the presentation.
+
+## Questions you may be asked
+
+- **Why not greedy (best profit per kilo first)?** That works for *fractional* knapsack (see the bandwidth problem), but not 0/1. Example 3: greedy takes item 1 (6 per unit) and item 2, for 160; the DP finds 220.
+- **Why is it called pseudo-polynomial?** The time depends on the *value* m, not just the number of items. A huge capacity means a huge table.
+- **How do you know which items were taken?** If a cell differs from the cell above it, the item on that row must have been taken.
