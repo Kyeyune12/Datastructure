@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Data_Structures/Data_Structures.iml" filepath="$PROJECT_DIR$/Data_Structures/Data_Structures.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Datastructure.iml" filepath="$PROJECT_DIR$/.idea/Datastructure.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Algorithms/Dynammic_Programming/Dynammic_Programming.iml" filepath="$PROJECT_DIR$/Algorithms/Dynammic_Programming/Dynammic_Programming.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Algorithms/Greedy_And_Divide_And_Conquer_Assignment/Greedy_And_Divide_And_Conquer_Assignment.iml" filepath="$PROJECT_DIR$/Algorithms/Greedy_And_Divide_And_Conquer_Assignment/Greedy_And_Divide_And_Conquer_Assignment.iml" />
+    </modules>
+  </component>
+</project>

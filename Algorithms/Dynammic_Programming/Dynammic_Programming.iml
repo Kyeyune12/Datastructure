@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/PartA_Q1_Backward_BCOST" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/PartA_Q2_General_Graph" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/PartA_Q3_Forward_Single_Destination" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/PartA_Q4_Arbitrary_S_and_T" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/PartB_Q1_All_Pairs_Floyd" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/PartB_Q2_Negative_Weights" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/PartB_Q3_Knapsack" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

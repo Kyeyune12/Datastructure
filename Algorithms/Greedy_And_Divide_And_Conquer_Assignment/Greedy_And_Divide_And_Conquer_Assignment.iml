@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/DC_Extra_Longest_Common_Prefix" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/DC_Extra_Route_Summarization" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/DC_Q1_Water_Leak" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/DC_Q2_Strassen_Matrix" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Greedy_Extra_Text_Wrap" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Greedy_Q1_Bandwidth_Allocation" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Greedy_Q2_Kruskal_MST" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
